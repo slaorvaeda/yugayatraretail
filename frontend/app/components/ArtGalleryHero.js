@@ -68,7 +68,11 @@ const ArtGalleryHero = () => {
   const cardsRef = useRef([]);
 
   useEffect(() => {
-    setIsMounted(true);
+    // Use requestAnimationFrame to avoid synchronous state updates in effects
+    const frame = requestAnimationFrame(() => {
+      setIsMounted(true);
+    });
+    return () => cancelAnimationFrame(frame);
   }, []);
 
   useEffect(() => {

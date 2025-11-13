@@ -44,7 +44,7 @@ export default function Hero() {
   return (
     <section 
       ref={heroRef}
-      className="min-h-screen flex items-center pt-20 px-4 sm:px-6 relative z-10"
+      className="min-h-screen flex items-center pt-20 px-2 sm:px-3 lg:px-4 relative z-10"
       data-aos="fade-up"
     >
       <div className="max-w-7xl mx-auto w-full">
@@ -111,11 +111,11 @@ export default function Hero() {
           </div>
         </div>
 
-        {/* Desktop Design - Original Layout (Unchanged) */}
+        {/* Desktop Design - Grid Layout */}
         <div className="hidden lg:grid lg:grid-cols-[1fr_1.2fr] gap-3 xl:gap-4 items-center">
           
           {/* Left Side - Two Cards */}
-          <div className="space-y-3 pr-2 pl-20">
+          <div className="space-y-3 pr-2 pl-6 xl:pl-8">
             {/* Left Card */}
             <div 
               ref={leftCardRef}
@@ -158,7 +158,7 @@ export default function Hero() {
           </div>
 
           {/* Right Side - Content */}
-          <div ref={rightContentRef} className="text-left pl-2" data-aos="fade-left" data-aos-delay="150">
+          <div ref={rightContentRef} className="text-left pl-2 xl:pl-4" data-aos="fade-left" data-aos-delay="150">
             <h1 className="text-6xl font-bold mb-8 leading-tight">
               <span className="text-black" data-aos="fade-up" data-aos-delay="250">Shaping Tomorrow&apos;s</span>
               <br />
