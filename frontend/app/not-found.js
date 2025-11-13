@@ -260,7 +260,7 @@ export default function NotFound() {
           ref={messageTextRef}
           className="mb-12 text-center text-lg text-white/90 sm:text-xl md:text-2xl"
         >
-          We can't find the page that you're looking for :(
+          We can&apos;t find the page that you&apos;re looking for :(
         </p>
 
         {/* 404 Visual */}

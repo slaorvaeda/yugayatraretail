@@ -3,12 +3,7 @@ import { motion } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 
-const ArtGalleryHero = () => {
-  const [isClient, setIsClient] = useState(false);
-  const cardsContainerRef = useRef(null);
-  const cardsRef = useRef([]);
-
-  const artCards = [
+const artCards = [
     {
       id: 1,
       title: "TESLA",
@@ -65,7 +60,12 @@ const ArtGalleryHero = () => {
       rotation: 15,
       zIndex: 1
     }
-  ];
+];
+
+const ArtGalleryHero = () => {
+  const [isClient, setIsClient] = useState(false);
+  const cardsContainerRef = useRef(null);
+  const cardsRef = useRef([]);
 
   useEffect(() => {
     setIsClient(true);
