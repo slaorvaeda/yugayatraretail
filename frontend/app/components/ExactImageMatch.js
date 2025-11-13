@@ -219,7 +219,10 @@ export default function ExactImageMatch() {
     };
     animate();
 
-    setIsLoaded(true);
+    // Set loaded state asynchronously to avoid synchronous setState in effect
+    requestAnimationFrame(() => {
+      setIsLoaded(true);
+    });
 
     // Handle resize
     const handleResize = () => {

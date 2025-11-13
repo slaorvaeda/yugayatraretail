@@ -58,6 +58,7 @@ export default function RootLayout({ children }) {
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${plusJakarta.variable} ${inter.variable} antialiased`}
+        suppressHydrationWarning
       >
         <AOSInit />
         <Navbar />

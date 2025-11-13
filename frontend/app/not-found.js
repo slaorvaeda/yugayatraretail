@@ -163,7 +163,16 @@ export default function NotFound() {
       ease: 'power1.inOut',
     });
 
-    gsap.to(ladderRef.current, {
+    // Hole pulse animation
+    const holePulseAnim = gsap.to(holeRef.current, {
+      scale: 1.05,
+      duration: 2,
+      repeat: -1,
+      yoyo: true,
+      ease: 'power1.inOut',
+    });
+
+    const ladderRotateAnim = gsap.to(ladderRef.current, {
       rotationZ: '+=2',
       duration: 3,
       repeat: -1,
@@ -171,14 +180,22 @@ export default function NotFound() {
       ease: 'power1.inOut',
     });
 
-    // Hole pulse animation
-    gsap.to(holeRef.current, {
-      scale: 1.05,
-      duration: 2,
-      repeat: -1,
-      yoyo: true,
-      ease: 'power1.inOut',
-    });
+    // Cleanup function
+    return () => {
+      if (fourLeftFloatRef.current) {
+        fourLeftFloatRef.current.kill();
+      }
+      if (fourRightFloatRef.current) {
+        fourRightFloatRef.current.kill();
+      }
+      if (holePulseAnim) {
+        holePulseAnim.kill();
+      }
+      if (ladderRotateAnim) {
+        ladderRotateAnim.kill();
+      }
+      tl.kill();
+    };
   }, []);
 
   const handleButtonHover = () => {
@@ -260,7 +277,7 @@ export default function NotFound() {
           ref={messageTextRef}
           className="mb-12 text-center text-lg text-white/90 sm:text-xl md:text-2xl"
         >
-          We can&apos;t find the page that you&apos;re looking for :(
+          {`We can't find the page that you're looking for :(`}
         </p>
 
         {/* 404 Visual */}
