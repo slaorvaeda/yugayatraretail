@@ -137,8 +137,8 @@ jobs:
           NEXT_PUBLIC_API_BASE_URL=http://localhost:5000/api
           EOF
 
-      - name: Build with docker-compose
-        run: docker-compose build
+      - name: Build with docker compose
+        run: docker compose build
 
       - name: Verify images
         run: |
