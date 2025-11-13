@@ -63,16 +63,20 @@ const artCards = [
 ];
 
 const ArtGalleryHero = () => {
-  const [isClient, setIsClient] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
   const cardsContainerRef = useRef(null);
   const cardsRef = useRef([]);
 
   useEffect(() => {
-    setIsClient(true);
+    // Use requestAnimationFrame to avoid synchronous state updates in effects
+    const frame = requestAnimationFrame(() => {
+      setIsMounted(true);
+    });
+    return () => cancelAnimationFrame(frame);
   }, []);
 
   useEffect(() => {
-    if (!isClient) return;
+    if (!isMounted) return;
 
     // Set initial state for all cards - they start as one set below the viewport
     gsap.set(cardsRef.current, {
@@ -105,7 +109,7 @@ const ArtGalleryHero = () => {
       stagger: 0.15
     }, "-=0.5");
 
-  }, [isClient]);
+  }, [isMounted]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white flex flex-col items-center justify-center px-4 py-12 lg:py-20" data-aos="fade-up">
@@ -211,19 +215,15 @@ const ArtGalleryHero = () => {
                 transform transition-all duration-300
                 hover:shadow-3xl
               `}
-              style={isClient ? {
+              style={{
                 left: `${20 + (index * 8)}%`,
-                top: `${Math.sin(index * 0.5) * 20}px`,
-                zIndex: card.zIndex
-              } : {
-                left: `${20 + (index * 8)}%`,
-                top: '0px',
+                top: isMounted ? `${Math.sin(index * 0.5) * 20}px` : '0px',
                 zIndex: card.zIndex
               }}
               data-aos="zoom-in"
               data-aos-delay={`${800 + (index * 50)}`}
               onMouseEnter={() => {
-                if (!isClient) return;
+                if (!isMounted) return;
                 gsap.to(cardsRef.current[index], {
                   scale: 1.05,
                   rotation: card.rotation + 5,
@@ -234,7 +234,7 @@ const ArtGalleryHero = () => {
                 });
               }}
               onMouseLeave={() => {
-                if (!isClient) return;
+                if (!isMounted) return;
                 gsap.to(cardsRef.current[index], {
                   scale: 1,
                   rotation: card.rotation,

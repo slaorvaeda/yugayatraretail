@@ -190,8 +190,10 @@ export default function NetworkGraphic() {
     };
     animate();
 
-    // Set loaded state
-    setIsLoaded(true);
+    // Set loaded state asynchronously to avoid synchronous setState in effect
+    requestAnimationFrame(() => {
+      setIsLoaded(true);
+    });
 
     // Handle resize
     const handleResize = () => {

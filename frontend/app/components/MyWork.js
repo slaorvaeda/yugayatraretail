@@ -22,10 +22,10 @@ export default function MyWork() {
     if (scrollContainerRef.current) {
       // Get responsive active card width based on screen size
       const getActiveCardWidth = () => {
-        if (window.innerWidth >= 1280) return 1400; // xl
-        if (window.innerWidth >= 1024) return 1200; // lg
-        if (window.innerWidth >= 768) return 1000;   // md
-        return 900; // default
+        if (window.innerWidth >= 1280) return 1000; // xl
+        if (window.innerWidth >= 1024) return 900; // lg
+        if (window.innerWidth >= 768) return 750;   // md
+        return 700; // default
       };
       
       const activeCardWidth = getActiveCardWidth();
@@ -184,7 +184,7 @@ export default function MyWork() {
                 onClick={() => handleCardClick(index)}
                 className={`relative flex-shrink-0 rounded-3xl overflow-hidden cursor-pointer transition-all duration-500 h-[70vh] ${
                   activeIndex === index
-                    ? 'w-[900px] md:w-[1000px] lg:w-[1200px] xl:w-[1400px] shadow-2xl z-10'
+                    ? 'w-[700px] md:w-[750px] lg:w-[900px] xl:w-[1000px] shadow-2xl z-10'
                     : 'w-[180px] md:w-[200px] shadow-md opacity-75'
                 }`}
                 style={{ scrollSnapAlign: 'start' }}
