@@ -135,7 +135,7 @@ export default function ExactImagePage() {
             </h3>
             <p className="text-xs text-gray-600 leading-relaxed" data-aos="fade-up" data-aos-delay="1000">
               Pioneering the next generation of digital transformation. 
-              Experience tomorrow's technology today with our revolutionary 
+              Experience tomorrow&apos;s technology today with our revolutionary 
               approach to modern business solutions.
             </p>
           </div>

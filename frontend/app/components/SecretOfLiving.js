@@ -10,7 +10,7 @@ export default function SecretOfLiving() {
         </h2>
         <div className="space-y-8 text-lg text-blue-700 leading-relaxed" data-aos="fade-up" data-aos-delay="100">
           <p data-aos="fade-up" data-aos-delay="200">
-            True fulfillment comes not from what we accumulate, but from what we give. When we extend our hands in generosity, we create ripples of positive change that touch lives in ways we may never fully see. Your support for 10.8 is more than a contribution—it's an investment in creating opportunities, building bridges, and shaping a future where everyone has the chance to thrive.
+            True fulfillment comes not from what we accumulate, but from what we give. When we extend our hands in generosity, we create ripples of positive change that touch lives in ways we may never fully see. Your support for 10.8 is more than a contribution—it&apos;s an investment in creating opportunities, building bridges, and shaping a future where everyone has the chance to thrive.
           </p>
           <p data-aos="fade-up" data-aos-delay="300">
             Together, we can transform challenges into opportunities, obstacles into stepping stones, and individual efforts into collective achievements that make a meaningful difference in the world.

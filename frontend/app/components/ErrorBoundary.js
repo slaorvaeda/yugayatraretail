@@ -25,7 +25,7 @@ class ErrorBoundary extends Component {
               Something went wrong
             </h2>
             <p className="text-blue-600 mb-4">
-              We're working to fix this issue.
+              We&apos;re working to fix this issue.
             </p>
             <button 
               onClick={() => window.location.reload()}

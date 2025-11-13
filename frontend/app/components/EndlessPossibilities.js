@@ -12,7 +12,7 @@ export default function EndlessPossibilities() {
           </h2>
           <div className="max-w-4xl mx-auto space-y-8 text-lg text-blue-700 leading-relaxed" data-aos="fade-up" data-aos-delay="200">
             <p data-aos="fade-up" data-aos-delay="300">
-              Everyone has something valuable to share—whether it's time, money, skills, or simply kindness. These contributions, no matter how small they may seem, have the power to uplift, inspire, and transform lives.
+              Everyone has something valuable to share—whether it&apos;s time, money, skills, or simply kindness. These contributions, no matter how small they may seem, have the power to uplift, inspire, and transform lives.
             </p>
             <p data-aos="fade-up" data-aos-delay="400">
               When we pool our resources and combine our efforts, we unlock endless possibilities for creating positive change. Together, we can build stronger communities, support those in need, and create a world where everyone has the opportunity to flourish.

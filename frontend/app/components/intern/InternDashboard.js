@@ -28,8 +28,8 @@ const InternDashboard = () => {
   const [submitting, setSubmitting] = useState({ routine: false, progression: false });
 
   const isActive = profile?.activation_status === 'active';
-  const visibleRoutines = isActive ? routines : [];
-  const visibleProgression = isActive ? progression : [];
+  const visibleRoutines = useMemo(() => isActive ? routines : [], [isActive, routines]);
+  const visibleProgression = useMemo(() => isActive ? progression : [], [isActive, progression]);
 
   const latestRoutine = visibleRoutines[0];
 

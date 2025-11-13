@@ -68,7 +68,7 @@ export default function QuickSupportCards() {
           <span className="rounded-full border border-white/30 px-5 py-2 text-xs font-semibold uppercase tracking-[0.35em] text-white/80" data-aos="fade-up">Support Hubs</span>
           <h2 className="mt-6 text-3xl font-semibold sm:text-4xl" data-aos="fade-up" data-aos-delay="100">Find What You Need Faster</h2>
           <p className="mt-4 max-w-2xl text-sm leading-relaxed text-white/70" data-aos="fade-up" data-aos-delay="200">
-            Navigate Yugayatra\'s service ecosystem. Tap into the squad that aligns programs, platforms, and partnerships to unlock skilled talent at scale.
+            Navigate Yugayatra&apos;s service ecosystem. Tap into the squad that aligns programs, platforms, and partnerships to unlock skilled talent at scale.
           </p>
         </div>
         <div className="mt-12 grid gap-6 md:grid-cols-2">

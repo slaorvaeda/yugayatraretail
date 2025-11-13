@@ -52,7 +52,7 @@ export default function Hero() {
         <div className="lg:hidden">
           <div className="text-center mb-8">
             <h1 className="text-3xl sm:text-4xl font-bold mb-4 leading-tight">
-              <span className="text-black">Shaping Tomorrow's</span>
+              <span className="text-black">Shaping Tomorrow&apos;s</span>
               <br />
               <span className="text-blue-500">Workforce Today</span>
             </h1>
@@ -160,7 +160,7 @@ export default function Hero() {
           {/* Right Side - Content */}
           <div ref={rightContentRef} className="text-left" data-aos="fade-left" data-aos-delay="150">
             <h1 className="text-6xl font-bold mb-8 leading-tight">
-              <span className="text-black" data-aos="fade-up" data-aos-delay="250">Shaping Tomorrow's</span>
+              <span className="text-black" data-aos="fade-up" data-aos-delay="250">Shaping Tomorrow&apos;s</span>
               <br />
               <span className="text-blue-500" data-aos="fade-up" data-aos-delay="350">Workforce Today</span>
             </h1>
