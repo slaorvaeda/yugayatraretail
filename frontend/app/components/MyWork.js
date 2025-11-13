@@ -1,5 +1,6 @@
 'use client';
 import React, { useState, useRef, useEffect } from 'react';
+import Image from 'next/image';
 
 export default function MyWork() {
   const [activeIndex, setActiveIndex] = useState(3); // Udyam Registration is default active
@@ -127,10 +128,11 @@ export default function MyWork() {
                 }}
                 className="relative h-48 rounded-xl overflow-hidden cursor-pointer shadow-lg"
               >
-                <img 
+                <Image 
                   src={item.image} 
                   alt={item.name}
-                  className="w-full h-full object-cover"
+                  fill
+                  className="object-cover"
                 />
                 <div className="absolute inset-0 bg-black/40"></div>
                 <div className="absolute bottom-0 left-0 right-0 p-3 bg-white/10 backdrop-blur-sm">
@@ -189,10 +191,11 @@ export default function MyWork() {
               >
                 {/* Card Image Background */}
                 <div className="absolute inset-0">
-                  <img 
+                  <Image 
                     src={item.image} 
                     alt={item.name}
-                    className="w-full h-full object-cover"
+                    fill
+                    className="object-cover"
                   />
                   <div className="absolute inset-0 bg-black/30"></div>
                 </div>
@@ -285,10 +288,12 @@ export default function MyWork() {
             </div>
 
             {/* Certificate Image */}
-            <div className="p-4">
-              <img 
+            <div className="p-4 relative w-full h-auto">
+              <Image 
                 src={selectedCertificate.image} 
                 alt={selectedCertificate.name}
+                width={800}
+                height={600}
                 className="w-full h-auto rounded-lg shadow-lg"
               />
             </div>

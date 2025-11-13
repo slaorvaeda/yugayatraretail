@@ -41,6 +41,7 @@ function OfferLetterTemplate({
           <div style={styles.headerBar}>
             <div style={styles.headerLeft}>
               <div style={styles.logoWrapper}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src="/favicon.png"
                   alt="Yuga Yatra logo"
@@ -70,6 +71,7 @@ function OfferLetterTemplate({
         <main style={styles.main}>
           <section style={styles.letterCard}>
             <div style={styles.cardWatermark}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/favicon.png"
                 alt="Watermark"
@@ -130,8 +132,11 @@ function OfferLetterTemplate({
             </div>
 
             <div style={styles.badgeColumn}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/startupindia.png" alt="Startup India" style={styles.badgeImage} />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/makeinindia.png" alt="Make in India" style={styles.badgeImage} />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/msme.png" alt="MSME" style={styles.badgeImage} />
             </div>
           </section>

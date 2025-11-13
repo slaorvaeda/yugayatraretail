@@ -345,7 +345,7 @@ const AuthForm = () => {
                   ) : role === 'admin' ? (
                     <div className="space-y-4">
                       <div className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-700">
-                        Staff onboarding is handled internally. Please switch to "Login" or choose "User" to register as an intern.
+                        Staff onboarding is handled internally. Please switch to &quot;Login&quot; or choose &quot;User&quot; to register as an intern.
                       </div>
                       <button
                         type="button"

@@ -87,7 +87,7 @@ export default function ContactSection() {
             Contact
           </h2>
           <p className="text-xl text-blue-700 max-w-3xl mx-auto leading-relaxed">
-            Ready to transform your workforce? Let's discuss how we can help you achieve your goals
+            Ready to transform your workforce? Let&apos;s discuss how we can help you achieve your goals
           </p>
         </div>
 
@@ -215,7 +215,7 @@ export default function ContactSection() {
 
                 {submitStatus === 'success' && (
                   <div className="bg-green-50 border border-green-200 text-green-800 rounded-xl p-4">
-                    Thank you! Your message has been sent. We'll get back to you soon.
+                    Thank you! Your message has been sent. We&apos;ll get back to you soon.
                   </div>
                 )}
 

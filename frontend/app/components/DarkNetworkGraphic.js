@@ -15,7 +15,8 @@ export default function DarkNetworkGraphic() {
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    if (!mountRef.current) return;
+    const mountElement = mountRef.current;
+    if (!mountElement) return;
 
     // Scene setup with dark background
     const scene = new THREE.Scene();
@@ -40,7 +41,7 @@ export default function DarkNetworkGraphic() {
     });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setClearColor(0x0a0f1a, 1); // Dark background
-    mountRef.current.appendChild(renderer.domElement);
+    mountElement.appendChild(renderer.domElement);
     rendererRef.current = renderer;
 
     // Create glowing network nodes - teal-green with glow effect
@@ -221,8 +222,8 @@ export default function DarkNetworkGraphic() {
       }
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('resize', handleResize);
-      if (mountRef.current && renderer.domElement) {
-        mountRef.current.removeChild(renderer.domElement);
+      if (mountElement && renderer.domElement) {
+        mountElement.removeChild(renderer.domElement);
       }
       renderer.dispose();
     };

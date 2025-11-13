@@ -78,7 +78,7 @@ export default function DarkPage() {
             </h3>
             <p className="text-sm text-gray-300 leading-relaxed">
               Pioneering the next generation of digital transformation. 
-              Experience tomorrow's technology today.
+              Experience tomorrow&apos;s technology today.
             </p>
           </div>
         </div>

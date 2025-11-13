@@ -17,7 +17,7 @@ export default function ContactFormSection() {
           <span className="text-sm font-semibold uppercase tracking-[0.35em] text-blue-600" data-aos="fade-up" data-aos-delay="100">Partner With Us</span>
           <h2 className="text-3xl font-semibold text-slate-900 sm:text-[2.4rem]" data-aos="fade-up" data-aos-delay="200">Reach Out Your Way</h2>
           <p className="text-base leading-relaxed text-slate-600" data-aos="fade-up" data-aos-delay="300">
-            Yugayatra Retail blends innovation with implementation. Tell us what you\'re building and we will match you with strategists who understand scale, skilling, and sustainable growth.
+            Yugayatra Retail blends innovation with implementation. Tell us what you&apos;re building and we will match you with strategists who understand scale, skilling, and sustainable growth.
           </p>
           <div className="rounded-3xl border border-blue-100 bg-blue-50/60 p-6 text-sm text-slate-600" data-aos="fade-up" data-aos-delay="400">
             <p className="font-semibold text-slate-800">Prefer a direct conversation?</p>
@@ -43,7 +43,7 @@ export default function ContactFormSection() {
         </div>
 
         <div className="relative rounded-[32px] border border-blue-100 bg-white p-8 shadow-[0_26px_60px_-32px_rgba(37,99,235,0.3)]" data-aos="fade-left" data-aos-duration="800" data-aos-delay="200">
-          <h3 className="text-2xl font-semibold text-slate-900" data-aos="fade-up" data-aos-delay="300">Hi! I\'m</h3>
+          <h3 className="text-2xl font-semibold text-slate-900" data-aos="fade-up" data-aos-delay="300">Hi! I&apos;m</h3>
           <form className="mt-6 flex flex-col gap-5" onSubmit={handleSubmit}>
             <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
               Your Name
@@ -78,7 +78,7 @@ export default function ContactFormSection() {
               </label>
             </div>
             <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
-              We\'re exploring
+              We&apos;re exploring
               <textarea
                 name="question"
                 rows={4}
