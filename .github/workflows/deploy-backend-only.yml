@@ -144,28 +144,15 @@ jobs:
         run: |
           set -e
           
-          # Use hardcoded values from env
-          REGION="${GCP_REGION:-us-central1}"
-          PROJECT="${GCP_PROJECT_ID:-yugayatraretail}"
-          REPO="${GCP_ARTIFACT_REGISTRY:-yugayatraretail}"
+          # Use ONLY hardcoded values from env
+          REGION="$GCP_REGION"
+          PROJECT="$GCP_PROJECT_ID"
+          REPO="$GCP_ARTIFACT_REGISTRY"
           
-          # Allow secrets to override if set
-          if [ -n "${{ secrets.GCP_REGION }}" ] && [ "${{ secrets.GCP_REGION }}" != "" ] && [ "${{ secrets.GCP_REGION }}" != "null" ]; then
-            REGION="${{ secrets.GCP_REGION }}"
-          fi
-          
-          if [ -n "${{ secrets.GCP_PROJECT_ID }}" ] && [ "${{ secrets.GCP_PROJECT_ID }}" != "" ] && [ "${{ secrets.GCP_PROJECT_ID }}" != "null" ]; then
-            PROJECT="${{ secrets.GCP_PROJECT_ID }}"
-          fi
-          
-          if [ -n "${{ secrets.GCP_ARTIFACT_REGISTRY }}" ] && [ "${{ secrets.GCP_ARTIFACT_REGISTRY }}" != "" ] && [ "${{ secrets.GCP_ARTIFACT_REGISTRY }}" != "null" ]; then
-            REPO="${{ secrets.GCP_ARTIFACT_REGISTRY }}"
-          fi
-          
-          # Remove whitespace
-          REGION=$(echo "$REGION" | xargs)
-          PROJECT=$(echo "$PROJECT" | xargs)
-          REPO=$(echo "$REPO" | xargs)
+          # Ensure they're set
+          REGION="${REGION:-us-central1}"
+          PROJECT="${PROJECT:-yugayatraretail}"
+          REPO="${REPO:-yugayatraretail}"
           
           # Build image tag
           IMAGE="${REGION}-docker.pkg.dev/${PROJECT}/${REPO}/backend:${GITHUB_SHA}"
