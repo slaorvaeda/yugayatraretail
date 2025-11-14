@@ -11,6 +11,9 @@ on:
 env:
   NODE_VERSION: "20"
   BACKEND_SERVICE: yugayatra-backend
+  GCP_REGION: us-central1
+  GCP_PROJECT_ID: yugayatraretail
+  GCP_ARTIFACT_REGISTRY: yugayatraretail
 
 jobs:
   build-and-push:
@@ -37,35 +40,35 @@ jobs:
         run: |
           set -e
           
-          # Read secrets and apply defaults (handle empty/null strings)
-          REGION="${{ secrets.GCP_REGION }}"
-          PROJECT="${{ secrets.GCP_PROJECT_ID }}"
-          REPO="${{ secrets.GCP_ARTIFACT_REGISTRY }}"
+          # Use hardcoded values from env (can be overridden by secrets)
+          REGION="${GCP_REGION:-us-central1}"
+          PROJECT="${GCP_PROJECT_ID:-yugayatraretail}"
+          REPO="${GCP_ARTIFACT_REGISTRY:-yugayatraretail}"
           
-          # Remove any whitespace and check if truly empty
+          # Allow secrets to override if set
+          if [ -n "${{ secrets.GCP_REGION }}" ] && [ "${{ secrets.GCP_REGION }}" != "" ] && [ "${{ secrets.GCP_REGION }}" != "null" ]; then
+            REGION="${{ secrets.GCP_REGION }}"
+          fi
+          
+          if [ -n "${{ secrets.GCP_PROJECT_ID }}" ] && [ "${{ secrets.GCP_PROJECT_ID }}" != "" ] && [ "${{ secrets.GCP_PROJECT_ID }}" != "null" ]; then
+            PROJECT="${{ secrets.GCP_PROJECT_ID }}"
+          fi
+          
+          if [ -n "${{ secrets.GCP_ARTIFACT_REGISTRY }}" ] && [ "${{ secrets.GCP_ARTIFACT_REGISTRY }}" != "" ] && [ "${{ secrets.GCP_ARTIFACT_REGISTRY }}" != "null" ]; then
+            REPO="${{ secrets.GCP_ARTIFACT_REGISTRY }}"
+          fi
+          
+          # Remove whitespace
           REGION=$(echo "$REGION" | xargs)
           PROJECT=$(echo "$PROJECT" | xargs)
           REPO=$(echo "$REPO" | xargs)
           
-          # Apply hardcoded defaults if empty or null
-          if [ -z "$REGION" ] || [ "$REGION" = "null" ] || [ "$REGION" = "" ]; then
-            REGION="us-central1"
-            echo "⚠️  Using default REGION: $REGION"
-          fi
-          
-          if [ -z "$PROJECT" ] || [ "$PROJECT" = "null" ] || [ "$PROJECT" = "" ]; then
-            PROJECT="yugayatraretail"
-            echo "⚠️  Using default PROJECT: $PROJECT"
-          fi
-          
-          if [ -z "$REPO" ] || [ "$REPO" = "null" ] || [ "$REPO" = "" ]; then
-            REPO="yugayatraretail"
-            echo "⚠️  Using default REPO: $REPO"
-          fi
-          
-          # Validate values are not empty
+          # Final validation - must not be empty
           if [ -z "$REGION" ] || [ -z "$PROJECT" ] || [ -z "$REPO" ]; then
-            echo "❌ ERROR: REGION, PROJECT, or REPO is empty!"
+            echo "❌ ERROR: REGION, PROJECT, or REPO is empty after processing!"
+            echo "REGION='$REGION'"
+            echo "PROJECT='$PROJECT'"
+            echo "REPO='$REPO'"
             exit 1
           fi
           
@@ -74,18 +77,20 @@ jobs:
           echo "  PROJECT=$PROJECT"
           echo "  REPO=$REPO"
           
-          # Build image tags with validation
+          # Build image tags - MUST start with region
           IMAGE_SHA="${REGION}-docker.pkg.dev/${PROJECT}/${REPO}/backend:${GITHUB_SHA}"
           IMAGE_LATEST="${REGION}-docker.pkg.dev/${PROJECT}/${REPO}/backend:latest"
           
-          # Validate tags don't start with dash
+          # Critical validation - tag must NOT start with dash
           if [[ "$IMAGE_SHA" == -* ]] || [[ "$IMAGE_LATEST" == -* ]]; then
-            echo "❌ ERROR: Image tag starts with dash! REGION is missing."
-            echo "IMAGE_SHA: $IMAGE_SHA"
-            echo "IMAGE_LATEST: $IMAGE_LATEST"
+            echo "❌ CRITICAL ERROR: Image tag starts with dash!"
+            echo "REGION='$REGION'"
+            echo "IMAGE_SHA='$IMAGE_SHA'"
+            echo "IMAGE_LATEST='$IMAGE_LATEST'"
             exit 1
           fi
           
+          # Output tags as separate lines for docker/build-push-action
           echo "IMAGE_SHA=$IMAGE_SHA" >> $GITHUB_OUTPUT
           echo "IMAGE_LATEST=$IMAGE_LATEST" >> $GITHUB_OUTPUT
           echo "IMAGE_TAGS=$IMAGE_SHA,$IMAGE_LATEST" >> $GITHUB_OUTPUT
@@ -97,9 +102,12 @@ jobs:
           echo "✅ Image tags created:"
           echo "  SHA: $IMAGE_SHA"
           echo "  Latest: $IMAGE_LATEST"
+          echo ""
+          echo "🔍 Verification:"
+          echo "  Tag starts with region: ${IMAGE_SHA:0:12}"
 
       - name: Configure Docker for Artifact Registry
-        run: gcloud auth configure-docker "${{ steps.tags.outputs.REGION }}-docker.pkg.dev"
+        run: gcloud auth configure-docker us-central1-docker.pkg.dev
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -110,7 +118,9 @@ jobs:
           context: ./backend
           file: ./backend/Dockerfile
           push: true
-          tags: ${{ steps.tags.outputs.IMAGE_TAGS }}
+          tags: |
+            ${{ steps.tags.outputs.IMAGE_SHA }}
+            ${{ steps.tags.outputs.IMAGE_LATEST }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -134,28 +144,28 @@ jobs:
         run: |
           set -e
           
-          # Read secrets and apply defaults
-          REGION="${{ secrets.GCP_REGION }}"
-          PROJECT="${{ secrets.GCP_PROJECT_ID }}"
-          REPO="${{ secrets.GCP_ARTIFACT_REGISTRY }}"
+          # Use hardcoded values from env
+          REGION="${GCP_REGION:-us-central1}"
+          PROJECT="${GCP_PROJECT_ID:-yugayatraretail}"
+          REPO="${GCP_ARTIFACT_REGISTRY:-yugayatraretail}"
           
-          # Remove whitespace and check if empty
+          # Allow secrets to override if set
+          if [ -n "${{ secrets.GCP_REGION }}" ] && [ "${{ secrets.GCP_REGION }}" != "" ] && [ "${{ secrets.GCP_REGION }}" != "null" ]; then
+            REGION="${{ secrets.GCP_REGION }}"
+          fi
+          
+          if [ -n "${{ secrets.GCP_PROJECT_ID }}" ] && [ "${{ secrets.GCP_PROJECT_ID }}" != "" ] && [ "${{ secrets.GCP_PROJECT_ID }}" != "null" ]; then
+            PROJECT="${{ secrets.GCP_PROJECT_ID }}"
+          fi
+          
+          if [ -n "${{ secrets.GCP_ARTIFACT_REGISTRY }}" ] && [ "${{ secrets.GCP_ARTIFACT_REGISTRY }}" != "" ] && [ "${{ secrets.GCP_ARTIFACT_REGISTRY }}" != "null" ]; then
+            REPO="${{ secrets.GCP_ARTIFACT_REGISTRY }}"
+          fi
+          
+          # Remove whitespace
           REGION=$(echo "$REGION" | xargs)
           PROJECT=$(echo "$PROJECT" | xargs)
           REPO=$(echo "$REPO" | xargs)
-          
-          # Apply hardcoded defaults
-          if [ -z "$REGION" ] || [ "$REGION" = "null" ] || [ "$REGION" = "" ]; then
-            REGION="us-central1"
-          fi
-          
-          if [ -z "$PROJECT" ] || [ "$PROJECT" = "null" ] || [ "$PROJECT" = "" ]; then
-            PROJECT="yugayatraretail"
-          fi
-          
-          if [ -z "$REPO" ] || [ "$REPO" = "null" ] || [ "$REPO" = "" ]; then
-            REPO="yugayatraretail"
-          fi
           
           # Build image tag
           IMAGE="${REGION}-docker.pkg.dev/${PROJECT}/${REPO}/backend:${GITHUB_SHA}"
@@ -163,6 +173,8 @@ jobs:
           # Validate tag
           if [[ "$IMAGE" == -* ]]; then
             echo "❌ ERROR: Image tag starts with dash! REGION is missing."
+            echo "REGION='$REGION'"
+            echo "IMAGE='$IMAGE'"
             exit 1
           fi
           
