@@ -57,13 +57,27 @@ jobs:
       - name: Build Image Tags
         id: tags
         run: |
+          # Ensure variables are set (use defaults if GITHUB_ENV didn't work)
+          GCP_REGION="${GCP_REGION:-us-central1}"
+          GCP_PROJECT_ID="${GCP_PROJECT_ID:-yugayatraretail}"
+          GCP_ARTIFACT_REGISTRY="${GCP_ARTIFACT_REGISTRY:-yugayatraretail}"
+          
+          echo "Building tags with:"
+          echo "  GCP_REGION: $GCP_REGION"
+          echo "  GCP_PROJECT_ID: $GCP_PROJECT_ID"
+          echo "  GCP_ARTIFACT_REGISTRY: $GCP_ARTIFACT_REGISTRY"
+          
           IMAGE_SHA="$GCP_REGION-docker.pkg.dev/$GCP_PROJECT_ID/$GCP_ARTIFACT_REGISTRY/backend:${{ github.sha }}"
           IMAGE_LATEST="$GCP_REGION-docker.pkg.dev/$GCP_PROJECT_ID/$GCP_ARTIFACT_REGISTRY/backend:latest"
+          
           echo "IMAGE_SHA=$IMAGE_SHA" >> $GITHUB_OUTPUT
           echo "IMAGE_LATEST=$IMAGE_LATEST" >> $GITHUB_OUTPUT
           echo "IMAGE_TAGS=$IMAGE_SHA,$IMAGE_LATEST" >> $GITHUB_OUTPUT
-          echo "Using Image:"
-          echo "$IMAGE_SHA"
+          
+          echo ""
+          echo "Image tags created:"
+          echo "  SHA: $IMAGE_SHA"
+          echo "  Latest: $IMAGE_LATEST"
 
       - name: Configure Docker for Artifact Registry
         run: gcloud auth configure-docker "$GCP_REGION-docker.pkg.dev"
