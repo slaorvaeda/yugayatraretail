@@ -45,7 +45,10 @@ jobs:
 
       - name: Configure Docker for Artifact Registry
         run: |
-          REGION="${{ env.GCP_REGION }}"
+          REGION="${GCP_REGION:-us-central1}"
+          if [ -z "$REGION" ] || [ "$REGION" = "" ]; then
+            REGION="us-central1"
+          fi
           echo "Configuring Docker for: ${REGION}-docker.pkg.dev"
           gcloud auth configure-docker ${REGION}-docker.pkg.dev --quiet
 
@@ -55,15 +58,37 @@ jobs:
       - name: Build image tags
         id: image-tags
         run: |
-          REGION="${{ env.GCP_REGION }}"
-          PROJECT="${{ env.GCP_PROJECT_ID }}"
-          REPO="${{ env.GCP_ARTIFACT_REGISTRY }}"
+          set -e
           
-          # Validate values
+          # Use env vars with hardcoded fallbacks
+          REGION="${GCP_REGION:-us-central1}"
+          PROJECT="${GCP_PROJECT_ID:-yugayatraretail}"
+          REPO="${GCP_ARTIFACT_REGISTRY:-yugayatraretail}"
+          
+          # Also try reading from GitHub env context as fallback
+          if [ -z "$REGION" ] || [ "$REGION" = "" ]; then
+            REGION="us-central1"
+          fi
+          if [ -z "$PROJECT" ] || [ "$PROJECT" = "" ]; then
+            PROJECT="yugayatraretail"
+          fi
+          if [ -z "$REPO" ] || [ "$REPO" = "" ]; then
+            REPO="yugayatraretail"
+          fi
+          
+          # Final validation - must not be empty
           if [ -z "$REGION" ] || [ -z "$PROJECT" ] || [ -z "$REPO" ]; then
-            echo "❌ ERROR: REGION, PROJECT, or REPO is empty!"
+            echo "❌ ERROR: REGION, PROJECT, or REPO is empty after all fallbacks!"
+            echo "REGION='$REGION'"
+            echo "PROJECT='$PROJECT'"
+            echo "REPO='$REPO'"
             exit 1
           fi
+          
+          echo "✅ Using values:"
+          echo "  REGION=$REGION"
+          echo "  PROJECT=$PROJECT"
+          echo "  REPO=$REPO"
           
           BACKEND_IMAGE="${REGION}-docker.pkg.dev/${PROJECT}/${REPO}/backend"
           FRONTEND_IMAGE="${REGION}-docker.pkg.dev/${PROJECT}/${REPO}/frontend"
@@ -73,9 +98,12 @@ jobs:
           FRONTEND_TAG_SHA="${FRONTEND_IMAGE}:${GITHUB_SHA}"
           FRONTEND_TAG_LATEST="${FRONTEND_IMAGE}:latest"
           
-          # Validate tags don't start with dash
+          # Critical validation - tag must NOT start with dash
           if [[ "$BACKEND_TAG_SHA" == -* ]] || [[ "$FRONTEND_TAG_SHA" == -* ]]; then
-            echo "❌ ERROR: Image tag starts with dash! REGION is missing."
+            echo "❌ CRITICAL ERROR: Image tag starts with dash! REGION is missing."
+            echo "REGION='$REGION'"
+            echo "BACKEND_TAG_SHA='$BACKEND_TAG_SHA'"
+            echo "FRONTEND_TAG_SHA='$FRONTEND_TAG_SHA'"
             exit 1
           fi
           
@@ -84,9 +112,12 @@ jobs:
           echo "FRONTEND_SHA=$FRONTEND_TAG_SHA" >> $GITHUB_OUTPUT
           echo "FRONTEND_LATEST=$FRONTEND_TAG_LATEST" >> $GITHUB_OUTPUT
           
+          echo ""
           echo "✅ Image tags created:"
           echo "  Backend: $BACKEND_TAG_SHA"
           echo "  Frontend: $FRONTEND_TAG_SHA"
+          echo ""
+          echo "🔍 Verification - Tag starts with: ${BACKEND_TAG_SHA:0:20}"
 
       - name: Build and push backend image
         uses: docker/build-push-action@v5
