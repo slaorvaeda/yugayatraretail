@@ -40,39 +40,17 @@ jobs:
         run: |
           set -e
           
-          # Use hardcoded values from env (can be overridden by secrets)
-          REGION="${GCP_REGION:-us-central1}"
-          PROJECT="${GCP_PROJECT_ID:-yugayatraretail}"
-          REPO="${GCP_ARTIFACT_REGISTRY:-yugayatraretail}"
+          # Use ONLY hardcoded values from env - no secrets for these
+          REGION="$GCP_REGION"
+          PROJECT="$GCP_PROJECT_ID"
+          REPO="$GCP_ARTIFACT_REGISTRY"
           
-          # Allow secrets to override if set
-          if [ -n "${{ secrets.GCP_REGION }}" ] && [ "${{ secrets.GCP_REGION }}" != "" ] && [ "${{ secrets.GCP_REGION }}" != "null" ]; then
-            REGION="${{ secrets.GCP_REGION }}"
-          fi
+          # Ensure they're set (should be from env)
+          REGION="${REGION:-us-central1}"
+          PROJECT="${PROJECT:-yugayatraretail}"
+          REPO="${REPO:-yugayatraretail}"
           
-          if [ -n "${{ secrets.GCP_PROJECT_ID }}" ] && [ "${{ secrets.GCP_PROJECT_ID }}" != "" ] && [ "${{ secrets.GCP_PROJECT_ID }}" != "null" ]; then
-            PROJECT="${{ secrets.GCP_PROJECT_ID }}"
-          fi
-          
-          if [ -n "${{ secrets.GCP_ARTIFACT_REGISTRY }}" ] && [ "${{ secrets.GCP_ARTIFACT_REGISTRY }}" != "" ] && [ "${{ secrets.GCP_ARTIFACT_REGISTRY }}" != "null" ]; then
-            REPO="${{ secrets.GCP_ARTIFACT_REGISTRY }}"
-          fi
-          
-          # Remove whitespace
-          REGION=$(echo "$REGION" | xargs)
-          PROJECT=$(echo "$PROJECT" | xargs)
-          REPO=$(echo "$REPO" | xargs)
-          
-          # Final validation - must not be empty
-          if [ -z "$REGION" ] || [ -z "$PROJECT" ] || [ -z "$REPO" ]; then
-            echo "❌ ERROR: REGION, PROJECT, or REPO is empty after processing!"
-            echo "REGION='$REGION'"
-            echo "PROJECT='$PROJECT'"
-            echo "REPO='$REPO'"
-            exit 1
-          fi
-          
-          echo "✅ Using values:"
+          echo "✅ Using hardcoded values:"
           echo "  REGION=$REGION"
           echo "  PROJECT=$PROJECT"
           echo "  REPO=$REPO"
@@ -90,10 +68,9 @@ jobs:
             exit 1
           fi
           
-          # Output tags as separate lines for docker/build-push-action
+          # Output tags
           echo "IMAGE_SHA=$IMAGE_SHA" >> $GITHUB_OUTPUT
           echo "IMAGE_LATEST=$IMAGE_LATEST" >> $GITHUB_OUTPUT
-          echo "IMAGE_TAGS=$IMAGE_SHA,$IMAGE_LATEST" >> $GITHUB_OUTPUT
           echo "REGION=$REGION" >> $GITHUB_OUTPUT
           echo "PROJECT=$PROJECT" >> $GITHUB_OUTPUT
           echo "REPO=$REPO" >> $GITHUB_OUTPUT
@@ -102,9 +79,6 @@ jobs:
           echo "✅ Image tags created:"
           echo "  SHA: $IMAGE_SHA"
           echo "  Latest: $IMAGE_LATEST"
-          echo ""
-          echo "🔍 Verification:"
-          echo "  Tag starts with region: ${IMAGE_SHA:0:12}"
 
       - name: Configure Docker for Artifact Registry
         run: gcloud auth configure-docker us-central1-docker.pkg.dev
