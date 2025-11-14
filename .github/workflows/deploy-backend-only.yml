@@ -102,6 +102,11 @@ jobs:
           echo "Image tags created:"
           echo "  SHA: $IMAGE_SHA"
           echo "  Latest: $IMAGE_LATEST"
+          
+          echo ""
+          echo "Image tags created:"
+          echo "  SHA: $IMAGE_SHA"
+          echo "  Latest: $IMAGE_LATEST"
 
       - name: Configure Docker for Artifact Registry
         run: gcloud auth configure-docker "$GCP_REGION-docker.pkg.dev"
