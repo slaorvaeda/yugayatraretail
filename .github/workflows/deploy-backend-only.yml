@@ -35,24 +35,42 @@ jobs:
       - name: Validate Secrets
         run: |
           echo "====== Checking Secrets ======"
-          if [ -z "${{ secrets.GCP_PROJECT_ID }}" ]; then
+          # Read secrets into variables
+          GCP_PROJECT_ID_VAL="${{ secrets.GCP_PROJECT_ID }}"
+          GCP_REGION_VAL="${{ secrets.GCP_REGION }}"
+          GCP_ARTIFACT_REGISTRY_VAL="${{ secrets.GCP_ARTIFACT_REGISTRY }}"
+          
+          # Check and set GCP_PROJECT_ID
+          if [ -z "$GCP_PROJECT_ID_VAL" ] || [ "$GCP_PROJECT_ID_VAL" = "" ] || [ "$GCP_PROJECT_ID_VAL" = "null" ]; then
             echo "⚠️  GCP_PROJECT_ID not found. Using default: yugayatraretail"
-            echo "GCP_PROJECT_ID=yugayatraretail" >> $GITHUB_ENV
+            GCP_PROJECT_ID_VAL="yugayatraretail"
           else
-            echo "GCP_PROJECT_ID=${{ secrets.GCP_PROJECT_ID }}" >> $GITHUB_ENV
+            echo "✅ GCP_PROJECT_ID: $GCP_PROJECT_ID_VAL"
           fi
-          if [ -z "${{ secrets.GCP_REGION }}" ]; then
+          echo "GCP_PROJECT_ID=$GCP_PROJECT_ID_VAL" >> $GITHUB_ENV
+          
+          # Check and set GCP_REGION
+          if [ -z "$GCP_REGION_VAL" ] || [ "$GCP_REGION_VAL" = "" ] || [ "$GCP_REGION_VAL" = "null" ]; then
             echo "⚠️  GCP_REGION not found. Using default: us-central1"
-            echo "GCP_REGION=us-central1" >> $GITHUB_ENV
+            GCP_REGION_VAL="us-central1"
           else
-            echo "GCP_REGION=${{ secrets.GCP_REGION }}" >> $GITHUB_ENV
+            echo "✅ GCP_REGION: $GCP_REGION_VAL"
           fi
-          if [ -z "${{ secrets.GCP_ARTIFACT_REGISTRY }}" ]; then
+          echo "GCP_REGION=$GCP_REGION_VAL" >> $GITHUB_ENV
+          
+          # Check and set GCP_ARTIFACT_REGISTRY
+          if [ -z "$GCP_ARTIFACT_REGISTRY_VAL" ] || [ "$GCP_ARTIFACT_REGISTRY_VAL" = "" ] || [ "$GCP_ARTIFACT_REGISTRY_VAL" = "null" ]; then
             echo "⚠️  GCP_ARTIFACT_REGISTRY not found. Using default: yugayatraretail"
-            echo "GCP_ARTIFACT_REGISTRY=yugayatraretail" >> $GITHUB_ENV
+            GCP_ARTIFACT_REGISTRY_VAL="yugayatraretail"
           else
-            echo "GCP_ARTIFACT_REGISTRY=${{ secrets.GCP_ARTIFACT_REGISTRY }}" >> $GITHUB_ENV
+            echo "✅ GCP_ARTIFACT_REGISTRY: $GCP_ARTIFACT_REGISTRY_VAL"
           fi
+          echo "GCP_ARTIFACT_REGISTRY=$GCP_ARTIFACT_REGISTRY_VAL" >> $GITHUB_ENV
+          
+          echo "Final values:"
+          echo "  GCP_REGION=$GCP_REGION_VAL"
+          echo "  GCP_PROJECT_ID=$GCP_PROJECT_ID_VAL"
+          echo "  GCP_ARTIFACT_REGISTRY=$GCP_ARTIFACT_REGISTRY_VAL"
 
       - name: Build Image Tags
         id: tags
