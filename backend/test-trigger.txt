@@ -1,0 +1,4 @@
+Test file to trigger CI/CD workflow
+Last updated: 2025-11-14
+Testing authentication fix - workflow should now work correctly
+
