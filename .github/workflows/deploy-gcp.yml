@@ -6,17 +6,13 @@ on:
   workflow_dispatch:
 
 env:
-  NODE_VERSION: '20'
-  GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID || 'yugayatraretail' }}
-  GCP_REGION: ${{ secrets.GCP_REGION || 'us-central1' }}
-  ARTIFACT_REGISTRY: ${{ secrets.GCP_ARTIFACT_REGISTRY || 'yugayatraretail' }}
+  NODE_VERSION: "20"
   BACKEND_SERVICE: yugayatra-backend
   FRONTEND_SERVICE: yugayatra-frontend
 
 jobs:
-  # Build and Push to Artifact Registry
   build-and-push:
-    name: Build and Push Docker Images
+    name: Build & Push Docker Images
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -33,79 +29,76 @@ jobs:
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
-        with:
-          project_id: ${{ env.GCP_PROJECT_ID }}
 
-      - name: Validate and set image tags
-        id: image-tags
+      - name: Build Image Tags
+        id: tags
         run: |
-          # Use defaults if secrets not set
-          GCP_REGION="${{ secrets.GCP_REGION }}"
-          GCP_PROJECT_ID="${{ secrets.GCP_PROJECT_ID }}"
-          GCP_ARTIFACT_REGISTRY="${{ secrets.GCP_ARTIFACT_REGISTRY }}"
+          # Read secrets directly with defaults
+          REGION="${{ secrets.GCP_REGION }}"
+          PROJECT="${{ secrets.GCP_PROJECT_ID }}"
+          REPO="${{ secrets.GCP_ARTIFACT_REGISTRY }}"
           
           # Apply defaults if empty
-          GCP_REGION="${GCP_REGION:-us-central1}"
-          GCP_PROJECT_ID="${GCP_PROJECT_ID:-yugayatraretail}"
-          GCP_ARTIFACT_REGISTRY="${GCP_ARTIFACT_REGISTRY:-yugayatraretail}"
+          REGION="${REGION:-us-central1}"
+          PROJECT="${PROJECT:-yugayatraretail}"
+          REPO="${REPO:-yugayatraretail}"
           
-          echo "Validated values:"
-          echo "  GCP_REGION: ${GCP_REGION}"
-          echo "  GCP_PROJECT_ID: ${GCP_PROJECT_ID}"
-          echo "  GCP_ARTIFACT_REGISTRY: ${GCP_ARTIFACT_REGISTRY}"
+          echo "Using:"
+          echo "  REGION=$REGION"
+          echo "  PROJECT=$PROJECT"
+          echo "  REPO=$REPO"
           
-          BACKEND_TAG_SHA="${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GCP_ARTIFACT_REGISTRY}/backend:${{ github.sha }}"
-          BACKEND_TAG_LATEST="${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GCP_ARTIFACT_REGISTRY}/backend:latest"
-          FRONTEND_TAG_SHA="${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GCP_ARTIFACT_REGISTRY}/frontend:${{ github.sha }}"
-          FRONTEND_TAG_LATEST="${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GCP_ARTIFACT_REGISTRY}/frontend:latest"
+          # Build image tags
+          BACKEND_SHA="${REGION}-docker.pkg.dev/${PROJECT}/${REPO}/backend:${GITHUB_SHA}"
+          BACKEND_LATEST="${REGION}-docker.pkg.dev/${PROJECT}/${REPO}/backend:latest"
+          FRONTEND_SHA="${REGION}-docker.pkg.dev/${PROJECT}/${REPO}/frontend:${GITHUB_SHA}"
+          FRONTEND_LATEST="${REGION}-docker.pkg.dev/${PROJECT}/${REPO}/frontend:latest"
           
-          # Validate constructed tags
-          if [[ "$BACKEND_TAG_SHA" == *"-docker.pkg.dev"* ]] && [[ "$BACKEND_TAG_SHA" != *"us-central1-docker.pkg.dev"* ]] && [[ "$BACKEND_TAG_SHA" != *"asia-south1-docker.pkg.dev"* ]]; then
-            echo "ERROR: Invalid image tag format - region is missing"
-            echo "Tag: $BACKEND_TAG_SHA"
-            exit 1
-          fi
+          echo "BACKEND_SHA=$BACKEND_SHA" >> $GITHUB_OUTPUT
+          echo "BACKEND_LATEST=$BACKEND_LATEST" >> $GITHUB_OUTPUT
+          echo "FRONTEND_SHA=$FRONTEND_SHA" >> $GITHUB_OUTPUT
+          echo "FRONTEND_LATEST=$FRONTEND_LATEST" >> $GITHUB_OUTPUT
+          echo "BACKEND_TAGS=$BACKEND_SHA,$BACKEND_LATEST" >> $GITHUB_OUTPUT
+          echo "FRONTEND_TAGS=$FRONTEND_SHA,$FRONTEND_LATEST" >> $GITHUB_OUTPUT
+          echo "REGION=$REGION" >> $GITHUB_OUTPUT
+          echo "PROJECT=$PROJECT" >> $GITHUB_OUTPUT
+          echo "REPO=$REPO" >> $GITHUB_OUTPUT
           
-          echo "BACKEND_TAGS=$BACKEND_TAG_SHA,$BACKEND_TAG_LATEST" >> $GITHUB_OUTPUT
-          echo "FRONTEND_TAGS=$FRONTEND_TAG_SHA,$FRONTEND_TAG_LATEST" >> $GITHUB_OUTPUT
-          echo "GCP_REGION=$GCP_REGION" >> $GITHUB_OUTPUT
-          echo "GCP_PROJECT_ID=$GCP_PROJECT_ID" >> $GITHUB_OUTPUT
-          
-          echo "Image tags:"
-          echo "  Backend SHA: $BACKEND_TAG_SHA"
-          echo "  Backend Latest: $BACKEND_TAG_LATEST"
-          echo "  Frontend SHA: $FRONTEND_TAG_SHA"
-          echo "  Frontend Latest: $FRONTEND_TAG_LATEST"
+          echo ""
+          echo "Image tags created:"
+          echo "  Backend SHA: $BACKEND_SHA"
+          echo "  Backend Latest: $BACKEND_LATEST"
+          echo "  Frontend SHA: $FRONTEND_SHA"
+          echo "  Frontend Latest: $FRONTEND_LATEST"
 
       - name: Configure Docker for Artifact Registry
-        run: gcloud auth configure-docker "${{ steps.image-tags.outputs.GCP_REGION }}-docker.pkg.dev"
+        run: gcloud auth configure-docker "${{ steps.tags.outputs.REGION }}-docker.pkg.dev"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build and push backend image
+      - name: Build & Push Backend Image
         uses: docker/build-push-action@v5
         with:
           context: ./backend
           file: ./backend/Dockerfile
           push: true
-          tags: ${{ steps.image-tags.outputs.BACKEND_TAGS }}
+          tags: ${{ steps.tags.outputs.BACKEND_TAGS }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Build and push frontend image
+      - name: Build & Push Frontend Image
         uses: docker/build-push-action@v5
         with:
           context: ./frontend
           file: ./frontend/Dockerfile
           push: true
-          tags: ${{ steps.image-tags.outputs.FRONTEND_TAGS }}
+          tags: ${{ steps.tags.outputs.FRONTEND_TAGS }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
             NEXT_PUBLIC_API_BASE_URL=${{ secrets.NEXT_PUBLIC_API_BASE_URL || 'https://yugayatra-backend-xxxxx-uc.a.run.app/api' }}
 
-  # Deploy Backend to Cloud Run
   deploy-backend:
     name: Deploy Backend to Cloud Run
     runs-on: ubuntu-latest
@@ -113,9 +106,6 @@ jobs:
     if: github.ref == 'refs/heads/main'
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
@@ -123,38 +113,52 @@ jobs:
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
-        with:
-          project_id: ${{ env.GCP_PROJECT_ID }}
+
+      - name: Set deployment values
+        id: deploy-values
+        run: |
+          # Read secrets directly with defaults
+          REGION="${{ secrets.GCP_REGION }}"
+          PROJECT="${{ secrets.GCP_PROJECT_ID }}"
+          REPO="${{ secrets.GCP_ARTIFACT_REGISTRY }}"
+          
+          # Apply defaults if empty
+          REGION="${REGION:-us-central1}"
+          PROJECT="${PROJECT:-yugayatraretail}"
+          REPO="${REPO:-yugayatraretail}"
+          
+          echo "REGION=$REGION" >> $GITHUB_OUTPUT
+          echo "PROJECT=$PROJECT" >> $GITHUB_OUTPUT
+          echo "REPO=$REPO" >> $GITHUB_OUTPUT
+          echo "BACKEND_IMAGE=${REGION}-docker.pkg.dev/${PROJECT}/${REPO}/backend:${GITHUB_SHA}" >> $GITHUB_OUTPUT
 
       - name: Deploy Backend to Cloud Run
         run: |
+          echo "Deploying backend image: ${{ steps.deploy-values.outputs.BACKEND_IMAGE }}"
           gcloud run deploy ${{ env.BACKEND_SERVICE }} \
-            --image ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY }}/backend:${{ github.sha }} \
+            --image ${{ steps.deploy-values.outputs.BACKEND_IMAGE }} \
             --platform managed \
-            --region ${{ env.GCP_REGION }} \
+            --region ${{ steps.deploy-values.outputs.REGION }} \
             --allow-unauthenticated \
-            --port 5000 \
+            --port 5001 \
             --memory 512Mi \
             --cpu 1 \
             --min-instances 0 \
             --max-instances 10 \
             --timeout 300 \
-            --set-env-vars "NODE_ENV=production,PORT=5000" \
-            --set-secrets "SUPABASE_URL=SUPABASE_URL:latest,SUPABASE_SERVICE_ROLE_KEY=SUPABASE_SERVICE_ROLE_KEY:latest,JWT_SECRET=JWT_SECRET:latest,CLOUDINARY_CLOUD_NAME=CLOUDINARY_CLOUD_NAME:latest,CLOUDINARY_API_KEY=CLOUDINARY_API_KEY:latest,CLOUDINARY_API_SECRET=CLOUDINARY_API_SECRET:latest,CLIENT_URL=CLIENT_URL:latest" \
-            --project ${{ env.GCP_PROJECT_ID }}
+            --project ${{ steps.deploy-values.outputs.PROJECT }} \
+            --set-env-vars "NODE_ENV=production,PORT=5001,SUPABASE_URL=${{ secrets.SUPABASE_URL }},SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }},JWT_SECRET=${{ secrets.JWT_SECRET }},CLOUDINARY_CLOUD_NAME=${{ secrets.CLOUDINARY_CLOUD_NAME }},CLOUDINARY_API_KEY=${{ secrets.CLOUDINARY_API_KEY }},CLOUDINARY_API_SECRET=${{ secrets.CLOUDINARY_API_SECRET }},CLIENT_URL=${{ secrets.CLIENT_URL }}"
 
       - name: Get Backend URL
         id: backend-url
         run: |
-          BACKEND_URL=$(gcloud run services describe ${{ env.BACKEND_SERVICE }} \
+          URL=$(gcloud run services describe ${{ env.BACKEND_SERVICE }} \
+            --region ${{ steps.deploy-values.outputs.REGION }} \
             --platform managed \
-            --region ${{ env.GCP_REGION }} \
-            --format 'value(status.url)' \
-            --project ${{ env.GCP_PROJECT_ID }})
-          echo "url=$BACKEND_URL" >> $GITHUB_OUTPUT
-          echo "Backend deployed at: $BACKEND_URL"
+            --format="value(status.url)")
+          echo "url=$URL" >> $GITHUB_OUTPUT
+          echo "Backend URL: $URL"
 
-  # Deploy Frontend to Cloud Run
   deploy-frontend:
     name: Deploy Frontend to Cloud Run
     runs-on: ubuntu-latest
@@ -162,9 +166,6 @@ jobs:
     if: github.ref == 'refs/heads/main'
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
@@ -172,26 +173,42 @@ jobs:
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
-        with:
-          project_id: ${{ env.GCP_PROJECT_ID }}
+
+      - name: Set deployment values
+        id: deploy-values
+        run: |
+          # Read secrets directly with defaults
+          REGION="${{ secrets.GCP_REGION }}"
+          PROJECT="${{ secrets.GCP_PROJECT_ID }}"
+          REPO="${{ secrets.GCP_ARTIFACT_REGISTRY }}"
+          
+          # Apply defaults if empty
+          REGION="${REGION:-us-central1}"
+          PROJECT="${PROJECT:-yugayatraretail}"
+          REPO="${REPO:-yugayatraretail}"
+          
+          echo "REGION=$REGION" >> $GITHUB_OUTPUT
+          echo "PROJECT=$PROJECT" >> $GITHUB_OUTPUT
+          echo "REPO=$REPO" >> $GITHUB_OUTPUT
+          echo "FRONTEND_IMAGE=${REGION}-docker.pkg.dev/${PROJECT}/${REPO}/frontend:${GITHUB_SHA}" >> $GITHUB_OUTPUT
 
       - name: Get Backend URL
         id: backend-url
         run: |
-          BACKEND_URL=$(gcloud run services describe ${{ env.BACKEND_SERVICE }} \
+          URL=$(gcloud run services describe ${{ env.BACKEND_SERVICE }} \
+            --region ${{ steps.deploy-values.outputs.REGION }} \
             --platform managed \
-            --region ${{ env.GCP_REGION }} \
-            --format 'value(status.url)' \
-            --project ${{ env.GCP_PROJECT_ID }})
-          echo "url=$BACKEND_URL" >> $GITHUB_OUTPUT
-          echo "Backend URL: $BACKEND_URL"
+            --format="value(status.url)")
+          echo "url=$URL" >> $GITHUB_OUTPUT
+          echo "Backend URL: $URL"
 
       - name: Deploy Frontend to Cloud Run
         run: |
+          echo "Deploying frontend image: ${{ steps.deploy-values.outputs.FRONTEND_IMAGE }}"
           gcloud run deploy ${{ env.FRONTEND_SERVICE }} \
-            --image ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY }}/frontend:${{ github.sha }} \
+            --image ${{ steps.deploy-values.outputs.FRONTEND_IMAGE }} \
             --platform managed \
-            --region ${{ env.GCP_REGION }} \
+            --region ${{ steps.deploy-values.outputs.REGION }} \
             --allow-unauthenticated \
             --port 3000 \
             --memory 512Mi \
@@ -199,67 +216,37 @@ jobs:
             --min-instances 0 \
             --max-instances 10 \
             --timeout 300 \
-            --set-env-vars "NODE_ENV=production,PORT=3000,NEXT_PUBLIC_API_BASE_URL=${{ steps.backend-url.outputs.url }}/api" \
-            --project ${{ secrets.GCP_PROJECT_ID }}
+            --project ${{ steps.deploy-values.outputs.PROJECT }} \
+            --set-env-vars "NODE_ENV=production,PORT=3000,NEXT_PUBLIC_API_BASE_URL=${{ steps.backend-url.outputs.url }}/api"
 
       - name: Get Frontend URL
         id: frontend-url
         run: |
-          FRONTEND_URL=$(gcloud run services describe ${{ env.FRONTEND_SERVICE }} \
+          URL=$(gcloud run services describe ${{ env.FRONTEND_SERVICE }} \
+            --region ${{ steps.deploy-values.outputs.REGION }} \
             --platform managed \
-            --region ${{ secrets.GCP_REGION }} \
-            --format 'value(status.url)' \
-            --project ${{ secrets.GCP_PROJECT_ID }})
-          echo "url=$FRONTEND_URL" >> $GITHUB_OUTPUT
-          echo "Frontend deployed at: $FRONTEND_URL"
+            --format="value(status.url)")
+          echo "url=$URL" >> $GITHUB_OUTPUT
+          echo "Frontend URL: $URL"
 
       - name: Update CLIENT_URL in Backend
         run: |
           gcloud run services update ${{ env.BACKEND_SERVICE }} \
             --update-env-vars "CLIENT_URL=${{ steps.frontend-url.outputs.url }}" \
             --platform managed \
-            --region ${{ env.GCP_REGION }} \
-            --project ${{ env.GCP_PROJECT_ID }}
+            --region ${{ steps.deploy-values.outputs.REGION }} \
+            --project ${{ steps.deploy-values.outputs.PROJECT }}
 
-  # Summary
-  deployment-summary:
-    name: Deployment Summary
-    runs-on: ubuntu-latest
-    needs: [deploy-backend, deploy-frontend]
-    if: github.ref == 'refs/heads/main'
-
-    steps:
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v2
-        with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
-
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
-        with:
-          project_id: ${{ env.GCP_PROJECT_ID }}
-
-      - name: Get Service URLs
+      - name: Deployment Summary
         run: |
-          echo "=========================================="
-          echo "Deployment Complete!"
-          echo "=========================================="
+          echo "======================================="
+          echo "✅ Deployment Complete!"
           echo ""
-          BACKEND_URL=$(gcloud run services describe ${{ env.BACKEND_SERVICE }} \
-            --platform managed \
-            --region ${{ env.GCP_REGION }} \
-            --format 'value(status.url)' \
-            --project ${{ env.GCP_PROJECT_ID }})
-          FRONTEND_URL=$(gcloud run services describe ${{ env.FRONTEND_SERVICE }} \
-            --platform managed \
-            --region ${{ env.GCP_REGION }} \
-            --format 'value(status.url)' \
-            --project ${{ env.GCP_PROJECT_ID }})
-          echo "Backend URL: $BACKEND_URL"
-          echo "Frontend URL: $FRONTEND_URL"
+          echo "Backend URL: ${{ steps.backend-url.outputs.url }}"
+          echo "Frontend URL: ${{ steps.frontend-url.outputs.url }}"
           echo ""
-          echo "Health Check:"
-          echo "  Backend: $BACKEND_URL/health"
-          echo "  Frontend: $FRONTEND_URL"
-          echo "=========================================="
+          echo "Health Checks:"
+          echo "  Backend: ${{ steps.backend-url.outputs.url }}/health"
+          echo "  Frontend: ${{ steps.frontend-url.outputs.url }}"
+          echo "======================================="
 

@@ -32,55 +32,15 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Validate Secrets
-        run: |
-          echo "====== Checking Secrets ======"
-          # Read secrets into variables
-          GCP_PROJECT_ID_VAL="${{ secrets.GCP_PROJECT_ID }}"
-          GCP_REGION_VAL="${{ secrets.GCP_REGION }}"
-          GCP_ARTIFACT_REGISTRY_VAL="${{ secrets.GCP_ARTIFACT_REGISTRY }}"
-          
-          # Check and set GCP_PROJECT_ID
-          if [ -z "$GCP_PROJECT_ID_VAL" ] || [ "$GCP_PROJECT_ID_VAL" = "" ] || [ "$GCP_PROJECT_ID_VAL" = "null" ]; then
-            echo "⚠️  GCP_PROJECT_ID not found. Using default: yugayatraretail"
-            GCP_PROJECT_ID_VAL="yugayatraretail"
-          else
-            echo "✅ GCP_PROJECT_ID: $GCP_PROJECT_ID_VAL"
-          fi
-          echo "GCP_PROJECT_ID=$GCP_PROJECT_ID_VAL" >> $GITHUB_ENV
-          
-          # Check and set GCP_REGION
-          if [ -z "$GCP_REGION_VAL" ] || [ "$GCP_REGION_VAL" = "" ] || [ "$GCP_REGION_VAL" = "null" ]; then
-            echo "⚠️  GCP_REGION not found. Using default: us-central1"
-            GCP_REGION_VAL="us-central1"
-          else
-            echo "✅ GCP_REGION: $GCP_REGION_VAL"
-          fi
-          echo "GCP_REGION=$GCP_REGION_VAL" >> $GITHUB_ENV
-          
-          # Check and set GCP_ARTIFACT_REGISTRY
-          if [ -z "$GCP_ARTIFACT_REGISTRY_VAL" ] || [ "$GCP_ARTIFACT_REGISTRY_VAL" = "" ] || [ "$GCP_ARTIFACT_REGISTRY_VAL" = "null" ]; then
-            echo "⚠️  GCP_ARTIFACT_REGISTRY not found. Using default: yugayatraretail"
-            GCP_ARTIFACT_REGISTRY_VAL="yugayatraretail"
-          else
-            echo "✅ GCP_ARTIFACT_REGISTRY: $GCP_ARTIFACT_REGISTRY_VAL"
-          fi
-          echo "GCP_ARTIFACT_REGISTRY=$GCP_ARTIFACT_REGISTRY_VAL" >> $GITHUB_ENV
-          
-          echo "Final values:"
-          echo "  GCP_REGION=$GCP_REGION_VAL"
-          echo "  GCP_PROJECT_ID=$GCP_PROJECT_ID_VAL"
-          echo "  GCP_ARTIFACT_REGISTRY=$GCP_ARTIFACT_REGISTRY_VAL"
-
       - name: Build Image Tags
         id: tags
         run: |
-          # Clean defaults (never allow empty)
+          # Read secrets directly with defaults
           REGION="${{ secrets.GCP_REGION }}"
           PROJECT="${{ secrets.GCP_PROJECT_ID }}"
           REPO="${{ secrets.GCP_ARTIFACT_REGISTRY }}"
           
-          # Fallbacks
+          # Apply defaults if empty
           REGION="${REGION:-us-central1}"
           PROJECT="${PROJECT:-yugayatraretail}"
           REPO="${REPO:-yugayatraretail}"
@@ -90,7 +50,7 @@ jobs:
           echo "  PROJECT=$PROJECT"
           echo "  REPO=$REPO"
           
-          # FINAL VALID TAGS
+          # Build image tags
           IMAGE_SHA="${REGION}-docker.pkg.dev/${PROJECT}/${REPO}/backend:${GITHUB_SHA}"
           IMAGE_LATEST="${REGION}-docker.pkg.dev/${PROJECT}/${REPO}/backend:latest"
           
@@ -134,27 +94,8 @@ jobs:
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
-      - name: Validate Secrets
-        run: |
-          echo "====== Checking Secrets ======"
-          if [ -z "${{ secrets.GCP_PROJECT_ID }}" ]; then
-            echo "⚠️  GCP_PROJECT_ID not found. Using default: yugayatraretail"
-            echo "GCP_PROJECT_ID=yugayatraretail" >> $GITHUB_ENV
-          else
-            echo "GCP_PROJECT_ID=${{ secrets.GCP_PROJECT_ID }}" >> $GITHUB_ENV
-          fi
-          if [ -z "${{ secrets.GCP_REGION }}" ]; then
-            echo "⚠️  GCP_REGION not found. Using default: us-central1"
-            echo "GCP_REGION=us-central1" >> $GITHUB_ENV
-          else
-            echo "GCP_REGION=${{ secrets.GCP_REGION }}" >> $GITHUB_ENV
-          fi
-          if [ -z "${{ secrets.GCP_ARTIFACT_REGISTRY }}" ]; then
-            echo "⚠️  GCP_ARTIFACT_REGISTRY not found. Using default: yugayatraretail"
-            echo "GCP_ARTIFACT_REGISTRY=yugayatraretail" >> $GITHUB_ENV
-          else
-            echo "GCP_ARTIFACT_REGISTRY=${{ secrets.GCP_ARTIFACT_REGISTRY }}" >> $GITHUB_ENV
-          fi
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
 
       - name: Set deployment values
         id: deploy-values
@@ -164,7 +105,7 @@ jobs:
           PROJECT="${{ secrets.GCP_PROJECT_ID }}"
           REPO="${{ secrets.GCP_ARTIFACT_REGISTRY }}"
           
-          # Fallbacks
+          # Apply defaults if empty
           REGION="${REGION:-us-central1}"
           PROJECT="${PROJECT:-yugayatraretail}"
           REPO="${REPO:-yugayatraretail}"
@@ -172,12 +113,12 @@ jobs:
           echo "REGION=$REGION" >> $GITHUB_OUTPUT
           echo "PROJECT=$PROJECT" >> $GITHUB_OUTPUT
           echo "REPO=$REPO" >> $GITHUB_OUTPUT
-          echo "IMAGE=${REGION}-docker.pkg.dev/${PROJECT}/${REPO}/backend:${{ github.sha }}" >> $GITHUB_OUTPUT
+          echo "IMAGE=${REGION}-docker.pkg.dev/${PROJECT}/${REPO}/backend:${GITHUB_SHA}" >> $GITHUB_OUTPUT
 
       - name: Deploy to Cloud Run
         run: |
           echo "Deploying image: ${{ steps.deploy-values.outputs.IMAGE }}"
-          gcloud run deploy $BACKEND_SERVICE \
+          gcloud run deploy ${{ env.BACKEND_SERVICE }} \
             --image ${{ steps.deploy-values.outputs.IMAGE }} \
             --platform managed \
             --region ${{ steps.deploy-values.outputs.REGION }} \
@@ -194,7 +135,7 @@ jobs:
       - name: Get Backend URL
         id: backend-url
         run: |
-          URL=$(gcloud run services describe $BACKEND_SERVICE \
+          URL=$(gcloud run services describe ${{ env.BACKEND_SERVICE }} \
             --region ${{ steps.deploy-values.outputs.REGION }} \
             --platform managed \
             --format="value(status.url)")
@@ -213,3 +154,4 @@ jobs:
           echo "URL: ${{ steps.backend-url.outputs.url }}"
           echo "Health: ${{ steps.backend-url.outputs.url }}/health"
           echo "======================================="
+
