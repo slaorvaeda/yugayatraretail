@@ -34,30 +34,66 @@ jobs:
           service_account_key: ${{ secrets.GCP_SA_KEY }}
           project_id: ${{ secrets.GCP_PROJECT_ID }}
 
-      - name: Validate and set image tags
+      - name: Validate GitHub Secrets
+        run: |
+          echo "=========================================="
+          echo "Checking GitHub Secrets..."
+          echo "=========================================="
+          
+          MISSING_SECRETS=0
+          
+          if [ -z "${{ secrets.GCP_REGION }}" ]; then
+            echo "❌ ERROR: GCP_REGION secret is NOT SET"
+            echo "   Go to: https://github.com/${{ github.repository }}/settings/secrets/actions"
+            echo "   Add secret: GCP_REGION = us-central1 (or your region)"
+            MISSING_SECRETS=1
+          else
+            echo "✅ GCP_REGION: ${{ secrets.GCP_REGION }}"
+          fi
+          
+          if [ -z "${{ secrets.GCP_PROJECT_ID }}" ]; then
+            echo "❌ ERROR: GCP_PROJECT_ID secret is NOT SET"
+            echo "   Go to: https://github.com/${{ github.repository }}/settings/secrets/actions"
+            echo "   Add secret: GCP_PROJECT_ID = your-project-id"
+            MISSING_SECRETS=1
+          else
+            echo "✅ GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}"
+          fi
+          
+          if [ -z "${{ secrets.GCP_ARTIFACT_REGISTRY }}" ]; then
+            echo "❌ ERROR: GCP_ARTIFACT_REGISTRY secret is NOT SET"
+            echo "   Go to: https://github.com/${{ github.repository }}/settings/secrets/actions"
+            echo "   Add secret: GCP_ARTIFACT_REGISTRY = your-registry-name"
+            MISSING_SECRETS=1
+          else
+            echo "✅ GCP_ARTIFACT_REGISTRY: ${{ secrets.GCP_ARTIFACT_REGISTRY }}"
+          fi
+          
+          if [ -z "${{ secrets.GCP_SA_KEY }}" ]; then
+            echo "❌ ERROR: GCP_SA_KEY secret is NOT SET"
+            echo "   Go to: https://github.com/${{ github.repository }}/settings/secrets/actions"
+            echo "   Add secret: GCP_SA_KEY = (JSON content from github-actions-key.json)"
+            MISSING_SECRETS=1
+          else
+            echo "✅ GCP_SA_KEY: Set (hidden)"
+          fi
+          
+          echo "=========================================="
+          if [ $MISSING_SECRETS -eq 1 ]; then
+            echo "❌ FAILED: Missing required secrets!"
+            echo "Please add the missing secrets above and re-run the workflow."
+            exit 1
+          else
+            echo "✅ All required secrets are set!"
+          fi
+          echo "=========================================="
+
+      - name: Set image tags
         id: image-tags
         run: |
           GCP_REGION="${{ secrets.GCP_REGION }}"
           GCP_PROJECT_ID="${{ secrets.GCP_PROJECT_ID }}"
           GCP_ARTIFACT_REGISTRY="${{ secrets.GCP_ARTIFACT_REGISTRY }}"
-          
-          if [ -z "$GCP_REGION" ] || [ "$GCP_REGION" = "" ]; then
-            echo "ERROR: GCP_REGION secret is not set or is empty"
-            exit 1
-          fi
-          if [ -z "$GCP_PROJECT_ID" ] || [ "$GCP_PROJECT_ID" = "" ]; then
-            echo "ERROR: GCP_PROJECT_ID secret is not set or is empty"
-            exit 1
-          fi
-          if [ -z "$GCP_ARTIFACT_REGISTRY" ] || [ "$GCP_ARTIFACT_REGISTRY" = "" ]; then
-            echo "ERROR: GCP_ARTIFACT_REGISTRY secret is not set or is empty"
-            exit 1
-          fi
-          
-          echo "All required secrets are set"
-          echo "GCP_REGION: $GCP_REGION"
-          echo "GCP_PROJECT_ID: $GCP_PROJECT_ID"
-          echo "GCP_ARTIFACT_REGISTRY: $GCP_ARTIFACT_REGISTRY"
           
           IMAGE_TAG_SHA="${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GCP_ARTIFACT_REGISTRY}/backend:${{ github.sha }}"
           IMAGE_TAG_LATEST="${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GCP_ARTIFACT_REGISTRY}/backend:latest"
@@ -66,7 +102,7 @@ jobs:
           echo "IMAGE_TAG_LATEST=$IMAGE_TAG_LATEST" >> $GITHUB_OUTPUT
           echo "IMAGE_TAGS=$IMAGE_TAG_SHA,$IMAGE_TAG_LATEST" >> $GITHUB_OUTPUT
           
-          echo "Image tags:"
+          echo "Image tags created:"
           echo "  SHA: $IMAGE_TAG_SHA"
           echo "  Latest: $IMAGE_TAG_LATEST"
 

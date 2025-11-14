@@ -32,24 +32,49 @@ jobs:
           service_account_key: ${{ secrets.GCP_SA_KEY }}
           project_id: ${{ env.GCP_PROJECT_ID }}
 
-      - name: Validate required secrets
+      - name: Validate and set image tags
+        id: image-tags
         run: |
-          if [ -z "${{ secrets.GCP_REGION }}" ]; then
-            echo "ERROR: GCP_REGION secret is not set"
+          GCP_REGION="${{ secrets.GCP_REGION }}"
+          GCP_PROJECT_ID="${{ secrets.GCP_PROJECT_ID }}"
+          GCP_ARTIFACT_REGISTRY="${{ secrets.GCP_ARTIFACT_REGISTRY }}"
+          
+          if [ -z "$GCP_REGION" ] || [ "$GCP_REGION" = "" ]; then
+            echo "ERROR: GCP_REGION secret is not set or is empty"
             exit 1
           fi
-          if [ -z "${{ secrets.GCP_PROJECT_ID }}" ]; then
-            echo "ERROR: GCP_PROJECT_ID secret is not set"
+          if [ -z "$GCP_PROJECT_ID" ] || [ "$GCP_PROJECT_ID" = "" ]; then
+            echo "ERROR: GCP_PROJECT_ID secret is not set or is empty"
             exit 1
           fi
-          if [ -z "${{ secrets.GCP_ARTIFACT_REGISTRY }}" ]; then
-            echo "ERROR: GCP_ARTIFACT_REGISTRY secret is not set"
+          if [ -z "$GCP_ARTIFACT_REGISTRY" ] || [ "$GCP_ARTIFACT_REGISTRY" = "" ]; then
+            echo "ERROR: GCP_ARTIFACT_REGISTRY secret is not set or is empty"
             exit 1
           fi
+          
           echo "All required secrets are set"
+          echo "GCP_REGION: $GCP_REGION"
+          echo "GCP_PROJECT_ID: $GCP_PROJECT_ID"
+          echo "GCP_ARTIFACT_REGISTRY: $GCP_ARTIFACT_REGISTRY"
+          
+          BACKEND_TAG_SHA="${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GCP_ARTIFACT_REGISTRY}/backend:${{ github.sha }}"
+          BACKEND_TAG_LATEST="${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GCP_ARTIFACT_REGISTRY}/backend:latest"
+          FRONTEND_TAG_SHA="${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GCP_ARTIFACT_REGISTRY}/frontend:${{ github.sha }}"
+          FRONTEND_TAG_LATEST="${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GCP_ARTIFACT_REGISTRY}/frontend:latest"
+          
+          echo "BACKEND_TAGS=$BACKEND_TAG_SHA,$BACKEND_TAG_LATEST" >> $GITHUB_OUTPUT
+          echo "FRONTEND_TAGS=$FRONTEND_TAG_SHA,$FRONTEND_TAG_LATEST" >> $GITHUB_OUTPUT
+          echo "GCP_REGION=$GCP_REGION" >> $GITHUB_OUTPUT
+          echo "GCP_PROJECT_ID=$GCP_PROJECT_ID" >> $GITHUB_OUTPUT
+          
+          echo "Image tags:"
+          echo "  Backend SHA: $BACKEND_TAG_SHA"
+          echo "  Backend Latest: $BACKEND_TAG_LATEST"
+          echo "  Frontend SHA: $FRONTEND_TAG_SHA"
+          echo "  Frontend Latest: $FRONTEND_TAG_LATEST"
 
       - name: Configure Docker for Artifact Registry
-        run: gcloud auth configure-docker "${{ env.GCP_REGION }}-docker.pkg.dev"
+        run: gcloud auth configure-docker "${{ steps.image-tags.outputs.GCP_REGION }}-docker.pkg.dev"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -60,7 +85,7 @@ jobs:
           context: ./backend
           file: ./backend/Dockerfile
           push: true
-          tags: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY }}/backend:${{ github.sha }},${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY }}/backend:latest
+          tags: ${{ steps.image-tags.outputs.BACKEND_TAGS }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -70,7 +95,7 @@ jobs:
           context: ./frontend
           file: ./frontend/Dockerfile
           push: true
-          tags: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY }}/frontend:${{ github.sha }},${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY }}/frontend:latest
+          tags: ${{ steps.image-tags.outputs.FRONTEND_TAGS }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
