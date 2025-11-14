@@ -30,10 +30,26 @@ jobs:
         uses: google-github-actions/setup-gcloud@v2
         with:
           service_account_key: ${{ secrets.GCP_SA_KEY }}
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          project_id: ${{ env.GCP_PROJECT_ID }}
+
+      - name: Validate required secrets
+        run: |
+          if [ -z "${{ secrets.GCP_REGION }}" ]; then
+            echo "ERROR: GCP_REGION secret is not set"
+            exit 1
+          fi
+          if [ -z "${{ secrets.GCP_PROJECT_ID }}" ]; then
+            echo "ERROR: GCP_PROJECT_ID secret is not set"
+            exit 1
+          fi
+          if [ -z "${{ secrets.GCP_ARTIFACT_REGISTRY }}" ]; then
+            echo "ERROR: GCP_ARTIFACT_REGISTRY secret is not set"
+            exit 1
+          fi
+          echo "All required secrets are set"
 
       - name: Configure Docker for Artifact Registry
-        run: gcloud auth configure-docker "${{ secrets.GCP_REGION }}-docker.pkg.dev"
+        run: gcloud auth configure-docker "${{ env.GCP_REGION }}-docker.pkg.dev"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -44,7 +60,7 @@ jobs:
           context: ./backend
           file: ./backend/Dockerfile
           push: true
-          tags: ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_ARTIFACT_REGISTRY }}/backend:${{ github.sha }},${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_ARTIFACT_REGISTRY }}/backend:latest
+          tags: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY }}/backend:${{ github.sha }},${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY }}/backend:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -54,7 +70,7 @@ jobs:
           context: ./frontend
           file: ./frontend/Dockerfile
           push: true
-          tags: ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_ARTIFACT_REGISTRY }}/frontend:${{ github.sha }},${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_ARTIFACT_REGISTRY }}/frontend:latest
+          tags: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY }}/frontend:${{ github.sha }},${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY }}/frontend:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
@@ -75,14 +91,14 @@ jobs:
         uses: google-github-actions/setup-gcloud@v2
         with:
           service_account_key: ${{ secrets.GCP_SA_KEY }}
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          project_id: ${{ env.GCP_PROJECT_ID }}
 
       - name: Deploy Backend to Cloud Run
         run: |
           gcloud run deploy ${{ env.BACKEND_SERVICE }} \
-            --image ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_ARTIFACT_REGISTRY }}/backend:${{ github.sha }} \
+            --image ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY }}/backend:${{ github.sha }} \
             --platform managed \
-            --region ${{ secrets.GCP_REGION }} \
+            --region ${{ env.GCP_REGION }} \
             --allow-unauthenticated \
             --port 5000 \
             --memory 512Mi \
@@ -92,16 +108,16 @@ jobs:
             --timeout 300 \
             --set-env-vars "NODE_ENV=production,PORT=5000" \
             --set-secrets "SUPABASE_URL=SUPABASE_URL:latest,SUPABASE_SERVICE_ROLE_KEY=SUPABASE_SERVICE_ROLE_KEY:latest,JWT_SECRET=JWT_SECRET:latest,CLOUDINARY_CLOUD_NAME=CLOUDINARY_CLOUD_NAME:latest,CLOUDINARY_API_KEY=CLOUDINARY_API_KEY:latest,CLOUDINARY_API_SECRET=CLOUDINARY_API_SECRET:latest,CLIENT_URL=CLIENT_URL:latest" \
-            --project ${{ secrets.GCP_PROJECT_ID }}
+            --project ${{ env.GCP_PROJECT_ID }}
 
       - name: Get Backend URL
         id: backend-url
         run: |
           BACKEND_URL=$(gcloud run services describe ${{ env.BACKEND_SERVICE }} \
             --platform managed \
-            --region ${{ secrets.GCP_REGION }} \
+            --region ${{ env.GCP_REGION }} \
             --format 'value(status.url)' \
-            --project ${{ secrets.GCP_PROJECT_ID }})
+            --project ${{ env.GCP_PROJECT_ID }})
           echo "url=$BACKEND_URL" >> $GITHUB_OUTPUT
           echo "Backend deployed at: $BACKEND_URL"
 
@@ -120,25 +136,25 @@ jobs:
         uses: google-github-actions/setup-gcloud@v2
         with:
           service_account_key: ${{ secrets.GCP_SA_KEY }}
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          project_id: ${{ env.GCP_PROJECT_ID }}
 
       - name: Get Backend URL
         id: backend-url
         run: |
           BACKEND_URL=$(gcloud run services describe ${{ env.BACKEND_SERVICE }} \
             --platform managed \
-            --region ${{ secrets.GCP_REGION }} \
+            --region ${{ env.GCP_REGION }} \
             --format 'value(status.url)' \
-            --project ${{ secrets.GCP_PROJECT_ID }})
+            --project ${{ env.GCP_PROJECT_ID }})
           echo "url=$BACKEND_URL" >> $GITHUB_OUTPUT
           echo "Backend URL: $BACKEND_URL"
 
       - name: Deploy Frontend to Cloud Run
         run: |
           gcloud run deploy ${{ env.FRONTEND_SERVICE }} \
-            --image ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_ARTIFACT_REGISTRY }}/frontend:${{ github.sha }} \
+            --image ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY }}/frontend:${{ github.sha }} \
             --platform managed \
-            --region ${{ secrets.GCP_REGION }} \
+            --region ${{ env.GCP_REGION }} \
             --allow-unauthenticated \
             --port 3000 \
             --memory 512Mi \
@@ -165,8 +181,8 @@ jobs:
           gcloud run services update ${{ env.BACKEND_SERVICE }} \
             --update-env-vars "CLIENT_URL=${{ steps.frontend-url.outputs.url }}" \
             --platform managed \
-            --region ${{ secrets.GCP_REGION }} \
-            --project ${{ secrets.GCP_PROJECT_ID }}
+            --region ${{ env.GCP_REGION }} \
+            --project ${{ env.GCP_PROJECT_ID }}
 
   # Summary
   deployment-summary:
@@ -180,7 +196,7 @@ jobs:
         uses: google-github-actions/setup-gcloud@v2
         with:
           service_account_key: ${{ secrets.GCP_SA_KEY }}
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          project_id: ${{ env.GCP_PROJECT_ID }}
 
       - name: Get Service URLs
         run: |
@@ -190,14 +206,14 @@ jobs:
           echo ""
           BACKEND_URL=$(gcloud run services describe ${{ env.BACKEND_SERVICE }} \
             --platform managed \
-            --region ${{ secrets.GCP_REGION }} \
+            --region ${{ env.GCP_REGION }} \
             --format 'value(status.url)' \
-            --project ${{ secrets.GCP_PROJECT_ID }})
+            --project ${{ env.GCP_PROJECT_ID }})
           FRONTEND_URL=$(gcloud run services describe ${{ env.FRONTEND_SERVICE }} \
             --platform managed \
-            --region ${{ secrets.GCP_REGION }} \
+            --region ${{ env.GCP_REGION }} \
             --format 'value(status.url)' \
-            --project ${{ secrets.GCP_PROJECT_ID }})
+            --project ${{ env.GCP_PROJECT_ID }})
           echo "Backend URL: $BACKEND_URL"
           echo "Frontend URL: $FRONTEND_URL"
           echo ""

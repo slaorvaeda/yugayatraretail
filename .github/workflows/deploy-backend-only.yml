@@ -34,8 +34,27 @@ jobs:
           service_account_key: ${{ secrets.GCP_SA_KEY }}
           project_id: ${{ secrets.GCP_PROJECT_ID }}
 
+      - name: Validate required secrets
+        run: |
+          if [ -z "${{ secrets.GCP_REGION }}" ]; then
+            echo "ERROR: GCP_REGION secret is not set"
+            exit 1
+          fi
+          if [ -z "${{ secrets.GCP_PROJECT_ID }}" ]; then
+            echo "ERROR: GCP_PROJECT_ID secret is not set"
+            exit 1
+          fi
+          if [ -z "${{ secrets.GCP_ARTIFACT_REGISTRY }}" ]; then
+            echo "ERROR: GCP_ARTIFACT_REGISTRY secret is not set"
+            exit 1
+          fi
+          echo "All required secrets are set"
+          echo "GCP_REGION: ${{ secrets.GCP_REGION }}"
+          echo "GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}"
+          echo "GCP_ARTIFACT_REGISTRY: ${{ secrets.GCP_ARTIFACT_REGISTRY }}"
+
       - name: Configure Docker for Artifact Registry
-        run: gcloud auth configure-docker "${{ secrets.GCP_REGION }}-docker.pkg.dev"
+        run: gcloud auth configure-docker "${{ env.GCP_REGION }}-docker.pkg.dev"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -46,7 +65,7 @@ jobs:
           context: ./backend
           file: ./backend/Dockerfile
           push: true
-          tags: ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_ARTIFACT_REGISTRY }}/backend:${{ github.sha }},${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_ARTIFACT_REGISTRY }}/backend:latest
+          tags: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY }}/backend:${{ github.sha }},${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY }}/backend:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -70,9 +89,9 @@ jobs:
       - name: Deploy Backend to Cloud Run
         run: |
           gcloud run deploy ${{ env.BACKEND_SERVICE }} \
-            --image ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_ARTIFACT_REGISTRY }}/backend:${{ github.sha }} \
+            --image ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY }}/backend:${{ github.sha }} \
             --platform managed \
-            --region ${{ secrets.GCP_REGION }} \
+            --region ${{ env.GCP_REGION }} \
             --allow-unauthenticated \
             --port 5000 \
             --memory 512Mi \
@@ -81,16 +100,16 @@ jobs:
             --max-instances 10 \
             --timeout 300 \
             --set-env-vars "NODE_ENV=production,PORT=5000,SUPABASE_URL=${{ secrets.SUPABASE_URL }},SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }},JWT_SECRET=${{ secrets.JWT_SECRET }},CLOUDINARY_CLOUD_NAME=${{ secrets.CLOUDINARY_CLOUD_NAME }},CLOUDINARY_API_KEY=${{ secrets.CLOUDINARY_API_KEY }},CLOUDINARY_API_SECRET=${{ secrets.CLOUDINARY_API_SECRET }},CLIENT_URL=${{ secrets.CLIENT_URL || 'https://yugayatra-frontend-xxxxx-uc.a.run.app' }}" \
-            --project ${{ secrets.GCP_PROJECT_ID }}
+            --project ${{ env.GCP_PROJECT_ID }}
 
       - name: Get Backend URL
         id: backend-url
         run: |
           BACKEND_URL=$(gcloud run services describe ${{ env.BACKEND_SERVICE }} \
             --platform managed \
-            --region ${{ secrets.GCP_REGION }} \
+            --region ${{ env.GCP_REGION }} \
             --format 'value(status.url)' \
-            --project ${{ secrets.GCP_PROJECT_ID }})
+            --project ${{ env.GCP_PROJECT_ID }})
           echo "url=$BACKEND_URL" >> $GITHUB_OUTPUT
           echo "Backend URL: $BACKEND_URL"
 
