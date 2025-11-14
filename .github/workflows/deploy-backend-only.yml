@@ -156,14 +156,31 @@ jobs:
             echo "GCP_ARTIFACT_REGISTRY=${{ secrets.GCP_ARTIFACT_REGISTRY }}" >> $GITHUB_ENV
           fi
 
+      - name: Set deployment values
+        id: deploy-values
+        run: |
+          # Read secrets directly with defaults
+          REGION="${{ secrets.GCP_REGION }}"
+          PROJECT="${{ secrets.GCP_PROJECT_ID }}"
+          REPO="${{ secrets.GCP_ARTIFACT_REGISTRY }}"
+          
+          # Fallbacks
+          REGION="${REGION:-us-central1}"
+          PROJECT="${PROJECT:-yugayatraretail}"
+          REPO="${REPO:-yugayatraretail}"
+          
+          echo "REGION=$REGION" >> $GITHUB_OUTPUT
+          echo "PROJECT=$PROJECT" >> $GITHUB_OUTPUT
+          echo "REPO=$REPO" >> $GITHUB_OUTPUT
+          echo "IMAGE=${REGION}-docker.pkg.dev/${PROJECT}/${REPO}/backend:${{ github.sha }}" >> $GITHUB_OUTPUT
+
       - name: Deploy to Cloud Run
         run: |
-          IMAGE="$GCP_REGION-docker.pkg.dev/$GCP_PROJECT_ID/$GCP_ARTIFACT_REGISTRY/backend:${{ github.sha }}"
-          echo "Deploying image: $IMAGE"
+          echo "Deploying image: ${{ steps.deploy-values.outputs.IMAGE }}"
           gcloud run deploy $BACKEND_SERVICE \
-            --image $IMAGE \
+            --image ${{ steps.deploy-values.outputs.IMAGE }} \
             --platform managed \
-            --region $GCP_REGION \
+            --region ${{ steps.deploy-values.outputs.REGION }} \
             --allow-unauthenticated \
             --port 5001 \
             --memory 512Mi \
@@ -171,14 +188,14 @@ jobs:
             --min-instances 0 \
             --max-instances 10 \
             --timeout 300 \
-            --project $GCP_PROJECT_ID \
+            --project ${{ steps.deploy-values.outputs.PROJECT }} \
             --set-env-vars "NODE_ENV=production,PORT=5001,SUPABASE_URL=${{ secrets.SUPABASE_URL }},SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }},JWT_SECRET=${{ secrets.JWT_SECRET }},CLOUDINARY_CLOUD_NAME=${{ secrets.CLOUDINARY_CLOUD_NAME }},CLOUDINARY_API_KEY=${{ secrets.CLOUDINARY_API_KEY }},CLOUDINARY_API_SECRET=${{ secrets.CLOUDINARY_API_SECRET }},CLIENT_URL=${{ secrets.CLIENT_URL }}"
 
       - name: Get Backend URL
         id: backend-url
         run: |
           URL=$(gcloud run services describe $BACKEND_SERVICE \
-            --region $GCP_REGION \
+            --region ${{ steps.deploy-values.outputs.REGION }} \
             --platform managed \
             --format="value(status.url)")
           echo "url=$URL" >> $GITHUB_OUTPUT
