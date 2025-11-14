@@ -34,27 +34,44 @@ jobs:
           service_account_key: ${{ secrets.GCP_SA_KEY }}
           project_id: ${{ secrets.GCP_PROJECT_ID }}
 
-      - name: Validate required secrets
+      - name: Validate and set image tags
+        id: image-tags
         run: |
-          if [ -z "${{ secrets.GCP_REGION }}" ]; then
-            echo "ERROR: GCP_REGION secret is not set"
+          GCP_REGION="${{ secrets.GCP_REGION }}"
+          GCP_PROJECT_ID="${{ secrets.GCP_PROJECT_ID }}"
+          GCP_ARTIFACT_REGISTRY="${{ secrets.GCP_ARTIFACT_REGISTRY }}"
+          
+          if [ -z "$GCP_REGION" ] || [ "$GCP_REGION" = "" ]; then
+            echo "ERROR: GCP_REGION secret is not set or is empty"
             exit 1
           fi
-          if [ -z "${{ secrets.GCP_PROJECT_ID }}" ]; then
-            echo "ERROR: GCP_PROJECT_ID secret is not set"
+          if [ -z "$GCP_PROJECT_ID" ] || [ "$GCP_PROJECT_ID" = "" ]; then
+            echo "ERROR: GCP_PROJECT_ID secret is not set or is empty"
             exit 1
           fi
-          if [ -z "${{ secrets.GCP_ARTIFACT_REGISTRY }}" ]; then
-            echo "ERROR: GCP_ARTIFACT_REGISTRY secret is not set"
+          if [ -z "$GCP_ARTIFACT_REGISTRY" ] || [ "$GCP_ARTIFACT_REGISTRY" = "" ]; then
+            echo "ERROR: GCP_ARTIFACT_REGISTRY secret is not set or is empty"
             exit 1
           fi
+          
           echo "All required secrets are set"
-          echo "GCP_REGION: ${{ secrets.GCP_REGION }}"
-          echo "GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}"
-          echo "GCP_ARTIFACT_REGISTRY: ${{ secrets.GCP_ARTIFACT_REGISTRY }}"
+          echo "GCP_REGION: $GCP_REGION"
+          echo "GCP_PROJECT_ID: $GCP_PROJECT_ID"
+          echo "GCP_ARTIFACT_REGISTRY: $GCP_ARTIFACT_REGISTRY"
+          
+          IMAGE_TAG_SHA="${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GCP_ARTIFACT_REGISTRY}/backend:${{ github.sha }}"
+          IMAGE_TAG_LATEST="${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GCP_ARTIFACT_REGISTRY}/backend:latest"
+          
+          echo "IMAGE_TAG_SHA=$IMAGE_TAG_SHA" >> $GITHUB_OUTPUT
+          echo "IMAGE_TAG_LATEST=$IMAGE_TAG_LATEST" >> $GITHUB_OUTPUT
+          echo "IMAGE_TAGS=$IMAGE_TAG_SHA,$IMAGE_TAG_LATEST" >> $GITHUB_OUTPUT
+          
+          echo "Image tags:"
+          echo "  SHA: $IMAGE_TAG_SHA"
+          echo "  Latest: $IMAGE_TAG_LATEST"
 
       - name: Configure Docker for Artifact Registry
-        run: gcloud auth configure-docker "${{ env.GCP_REGION }}-docker.pkg.dev"
+        run: gcloud auth configure-docker "${{ secrets.GCP_REGION }}-docker.pkg.dev"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -65,7 +82,7 @@ jobs:
           context: ./backend
           file: ./backend/Dockerfile
           push: true
-          tags: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY }}/backend:${{ github.sha }},${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY }}/backend:latest
+          tags: ${{ steps.image-tags.outputs.IMAGE_TAGS }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -86,12 +103,24 @@ jobs:
           service_account_key: ${{ secrets.GCP_SA_KEY }}
           project_id: ${{ secrets.GCP_PROJECT_ID }}
 
+      - name: Set image tag for deployment
+        id: deploy-image
+        run: |
+          GCP_REGION="${{ secrets.GCP_REGION }}"
+          GCP_PROJECT_ID="${{ secrets.GCP_PROJECT_ID }}"
+          GCP_ARTIFACT_REGISTRY="${{ secrets.GCP_ARTIFACT_REGISTRY }}"
+          
+          IMAGE_TAG="${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GCP_ARTIFACT_REGISTRY}/backend:${{ github.sha }}"
+          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_OUTPUT
+          echo "GCP_REGION=$GCP_REGION" >> $GITHUB_OUTPUT
+          echo "GCP_PROJECT_ID=$GCP_PROJECT_ID" >> $GITHUB_OUTPUT
+
       - name: Deploy Backend to Cloud Run
         run: |
           gcloud run deploy ${{ env.BACKEND_SERVICE }} \
-            --image ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY }}/backend:${{ github.sha }} \
+            --image ${{ steps.deploy-image.outputs.IMAGE_TAG }} \
             --platform managed \
-            --region ${{ env.GCP_REGION }} \
+            --region ${{ steps.deploy-image.outputs.GCP_REGION }} \
             --allow-unauthenticated \
             --port 5000 \
             --memory 512Mi \
@@ -100,16 +129,16 @@ jobs:
             --max-instances 10 \
             --timeout 300 \
             --set-env-vars "NODE_ENV=production,PORT=5000,SUPABASE_URL=${{ secrets.SUPABASE_URL }},SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }},JWT_SECRET=${{ secrets.JWT_SECRET }},CLOUDINARY_CLOUD_NAME=${{ secrets.CLOUDINARY_CLOUD_NAME }},CLOUDINARY_API_KEY=${{ secrets.CLOUDINARY_API_KEY }},CLOUDINARY_API_SECRET=${{ secrets.CLOUDINARY_API_SECRET }},CLIENT_URL=${{ secrets.CLIENT_URL || 'https://yugayatra-frontend-xxxxx-uc.a.run.app' }}" \
-            --project ${{ env.GCP_PROJECT_ID }}
+            --project ${{ steps.deploy-image.outputs.GCP_PROJECT_ID }}
 
       - name: Get Backend URL
         id: backend-url
         run: |
           BACKEND_URL=$(gcloud run services describe ${{ env.BACKEND_SERVICE }} \
             --platform managed \
-            --region ${{ env.GCP_REGION }} \
+            --region ${{ steps.deploy-image.outputs.GCP_REGION }} \
             --format 'value(status.url)' \
-            --project ${{ env.GCP_PROJECT_ID }})
+            --project ${{ steps.deploy-image.outputs.GCP_PROJECT_ID }})
           echo "url=$BACKEND_URL" >> $GITHUB_OUTPUT
           echo "Backend URL: $BACKEND_URL"
 
