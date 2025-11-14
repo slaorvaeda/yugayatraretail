@@ -1,0 +1,380 @@
+name: Deploy to Production (GCP Cloud Run)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "backend/**"
+      - "frontend/**"
+      - ".github/workflows/deploy-production.yml"
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: "20"
+  GCP_REGION: us-central1
+  GCP_PROJECT_ID: yugayatraretail
+  GCP_ARTIFACT_REGISTRY: yugayatraretail
+  BACKEND_SERVICE: yugayatra-backend
+  FRONTEND_SERVICE: yugayatra-frontend
+  BACKEND_PORT: 5001
+  FRONTEND_PORT: 3000
+
+jobs:
+  build-and-push:
+    name: Build and Push Docker Images
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      actions: write
+      id-token: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+
+      - name: Configure Docker for Artifact Registry
+        run: |
+          REGION="${{ env.GCP_REGION }}"
+          echo "Configuring Docker for: ${REGION}-docker.pkg.dev"
+          gcloud auth configure-docker ${REGION}-docker.pkg.dev --quiet
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build image tags
+        id: image-tags
+        run: |
+          REGION="${{ env.GCP_REGION }}"
+          PROJECT="${{ env.GCP_PROJECT_ID }}"
+          REPO="${{ env.GCP_ARTIFACT_REGISTRY }}"
+          
+          # Validate values
+          if [ -z "$REGION" ] || [ -z "$PROJECT" ] || [ -z "$REPO" ]; then
+            echo "❌ ERROR: REGION, PROJECT, or REPO is empty!"
+            exit 1
+          fi
+          
+          BACKEND_IMAGE="${REGION}-docker.pkg.dev/${PROJECT}/${REPO}/backend"
+          FRONTEND_IMAGE="${REGION}-docker.pkg.dev/${PROJECT}/${REPO}/frontend"
+          
+          BACKEND_TAG_SHA="${BACKEND_IMAGE}:${GITHUB_SHA}"
+          BACKEND_TAG_LATEST="${BACKEND_IMAGE}:latest"
+          FRONTEND_TAG_SHA="${FRONTEND_IMAGE}:${GITHUB_SHA}"
+          FRONTEND_TAG_LATEST="${FRONTEND_IMAGE}:latest"
+          
+          # Validate tags don't start with dash
+          if [[ "$BACKEND_TAG_SHA" == -* ]] || [[ "$FRONTEND_TAG_SHA" == -* ]]; then
+            echo "❌ ERROR: Image tag starts with dash! REGION is missing."
+            exit 1
+          fi
+          
+          echo "BACKEND_SHA=$BACKEND_TAG_SHA" >> $GITHUB_OUTPUT
+          echo "BACKEND_LATEST=$BACKEND_TAG_LATEST" >> $GITHUB_OUTPUT
+          echo "FRONTEND_SHA=$FRONTEND_TAG_SHA" >> $GITHUB_OUTPUT
+          echo "FRONTEND_LATEST=$FRONTEND_TAG_LATEST" >> $GITHUB_OUTPUT
+          
+          echo "✅ Image tags created:"
+          echo "  Backend: $BACKEND_TAG_SHA"
+          echo "  Frontend: $FRONTEND_TAG_SHA"
+
+      - name: Build and push backend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: true
+          tags: |
+            ${{ steps.image-tags.outputs.BACKEND_SHA }}
+            ${{ steps.image-tags.outputs.BACKEND_LATEST }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            NODE_ENV=production
+
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: true
+          tags: |
+            ${{ steps.image-tags.outputs.FRONTEND_SHA }}
+            ${{ steps.image-tags.outputs.FRONTEND_LATEST }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            NEXT_PUBLIC_API_BASE_URL=${{ secrets.NEXT_PUBLIC_API_BASE_URL || 'https://yugayatra-backend-xxxxx-uc.a.run.app/api' }}
+            NODE_ENV=production
+            NEXT_TELEMETRY_DISABLED=1
+
+  deploy-backend:
+    name: Deploy Backend to Cloud Run
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: build-and-push
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+
+      - name: Deploy Backend to Cloud Run
+        id: deploy-backend
+        run: |
+          REGION="${{ env.GCP_REGION }}"
+          PROJECT="${{ env.GCP_PROJECT_ID }}"
+          REPO="${{ env.GCP_ARTIFACT_REGISTRY }}"
+          SERVICE="${{ env.BACKEND_SERVICE }}"
+          PORT="${{ env.BACKEND_PORT }}"
+          
+          IMAGE="${REGION}-docker.pkg.dev/${PROJECT}/${REPO}/backend:${GITHUB_SHA}"
+          
+          echo "🚀 Deploying backend..."
+          echo "  Service: $SERVICE"
+          echo "  Image: $IMAGE"
+          echo "  Region: $REGION"
+          echo "  Port: $PORT"
+          
+          gcloud run deploy $SERVICE \
+            --image="$IMAGE" \
+            --platform=managed \
+            --region=$REGION \
+            --allow-unauthenticated \
+            --port=$PORT \
+            --memory=512Mi \
+            --cpu=1 \
+            --min-instances=0 \
+            --max-instances=10 \
+            --timeout=300 \
+            --project=$PROJECT \
+            --set-env-vars="NODE_ENV=production,PORT=$PORT,SUPABASE_URL=${{ secrets.SUPABASE_URL }},SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }},JWT_SECRET=${{ secrets.JWT_SECRET }},CLOUDINARY_CLOUD_NAME=${{ secrets.CLOUDINARY_CLOUD_NAME }},CLOUDINARY_API_KEY=${{ secrets.CLOUDINARY_API_KEY }},CLOUDINARY_API_SECRET=${{ secrets.CLOUDINARY_API_SECRET }},CLIENT_URL=${{ secrets.CLIENT_URL || 'https://yugayatra-frontend-xxxxx-uc.a.run.app' }}" \
+            --quiet
+          
+          # Get service URL
+          BACKEND_URL=$(gcloud run services describe $SERVICE \
+            --platform=managed \
+            --region=$REGION \
+            --format="value(status.url)" \
+            --project=$PROJECT)
+          
+          echo "url=$BACKEND_URL" >> $GITHUB_OUTPUT
+          echo "✅ Backend deployed at: $BACKEND_URL"
+
+      - name: Health check backend
+        run: |
+          BACKEND_URL="${{ steps.deploy-backend.outputs.url }}"
+          echo "🏥 Checking backend health..."
+          
+          # Wait for service to be ready
+          sleep 10
+          
+          # Try health check
+          for i in {1..5}; do
+            if curl -f -s "${BACKEND_URL}/health" > /dev/null; then
+              echo "✅ Backend is healthy!"
+              exit 0
+            fi
+            echo "⏳ Attempt $i/5: Waiting for backend to be ready..."
+            sleep 5
+          done
+          
+          echo "⚠️  Backend health check failed, but deployment succeeded"
+          echo "   URL: ${BACKEND_URL}/health"
+
+  deploy-frontend:
+    name: Deploy Frontend to Cloud Run
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [build-and-push, deploy-backend]
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+
+      - name: Get Backend URL
+        id: backend-url
+        run: |
+          REGION="${{ env.GCP_REGION }}"
+          PROJECT="${{ env.GCP_PROJECT_ID }}"
+          SERVICE="${{ env.BACKEND_SERVICE }}"
+          
+          BACKEND_URL=$(gcloud run services describe $SERVICE \
+            --platform=managed \
+            --region=$REGION \
+            --format="value(status.url)" \
+            --project=$PROJECT)
+          
+          echo "url=$BACKEND_URL" >> $GITHUB_OUTPUT
+          echo "Backend URL: $BACKEND_URL"
+
+      - name: Deploy Frontend to Cloud Run
+        id: deploy-frontend
+        run: |
+          REGION="${{ env.GCP_REGION }}"
+          PROJECT="${{ env.GCP_PROJECT_ID }}"
+          REPO="${{ env.GCP_ARTIFACT_REGISTRY }}"
+          SERVICE="${{ env.FRONTEND_SERVICE }}"
+          PORT="${{ env.FRONTEND_PORT }}"
+          BACKEND_URL="${{ steps.backend-url.outputs.url }}"
+          
+          IMAGE="${REGION}-docker.pkg.dev/${PROJECT}/${REPO}/frontend:${GITHUB_SHA}"
+          
+          echo "🚀 Deploying frontend..."
+          echo "  Service: $SERVICE"
+          echo "  Image: $IMAGE"
+          echo "  Region: $REGION"
+          echo "  Port: $PORT"
+          echo "  Backend URL: $BACKEND_URL"
+          
+          gcloud run deploy $SERVICE \
+            --image="$IMAGE" \
+            --platform=managed \
+            --region=$REGION \
+            --allow-unauthenticated \
+            --port=$PORT \
+            --memory=512Mi \
+            --cpu=1 \
+            --min-instances=0 \
+            --max-instances=10 \
+            --timeout=300 \
+            --project=$PROJECT \
+            --set-env-vars="NODE_ENV=production,PORT=$PORT,NEXT_PUBLIC_API_BASE_URL=${BACKEND_URL}/api" \
+            --quiet
+          
+          # Get service URL
+          FRONTEND_URL=$(gcloud run services describe $SERVICE \
+            --platform=managed \
+            --region=$REGION \
+            --format="value(status.url)" \
+            --project=$PROJECT)
+          
+          echo "url=$FRONTEND_URL" >> $GITHUB_OUTPUT
+          echo "✅ Frontend deployed at: $FRONTEND_URL"
+
+      - name: Update Backend CLIENT_URL
+        run: |
+          REGION="${{ env.GCP_REGION }}"
+          PROJECT="${{ env.GCP_PROJECT_ID }}"
+          BACKEND_SERVICE="${{ env.BACKEND_SERVICE }}"
+          FRONTEND_URL="${{ steps.deploy-frontend.outputs.url }}"
+          
+          echo "🔄 Updating backend CLIENT_URL to: $FRONTEND_URL"
+          
+          gcloud run services update $BACKEND_SERVICE \
+            --update-env-vars="CLIENT_URL=$FRONTEND_URL" \
+            --platform=managed \
+            --region=$REGION \
+            --project=$PROJECT \
+            --quiet
+          
+          echo "✅ Backend CLIENT_URL updated"
+
+      - name: Health check frontend
+        run: |
+          FRONTEND_URL="${{ steps.deploy-frontend.outputs.url }}"
+          echo "🏥 Checking frontend health..."
+          
+          # Wait for service to be ready
+          sleep 10
+          
+          # Try health check
+          for i in {1..5}; do
+            if curl -f -s "$FRONTEND_URL" > /dev/null; then
+              echo "✅ Frontend is healthy!"
+              exit 0
+            fi
+            echo "⏳ Attempt $i/5: Waiting for frontend to be ready..."
+            sleep 5
+          done
+          
+          echo "⚠️  Frontend health check failed, but deployment succeeded"
+          echo "   URL: $FRONTEND_URL"
+
+  deployment-summary:
+    name: Deployment Summary
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: [deploy-backend, deploy-frontend]
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+
+      - name: Get Service URLs
+        run: |
+          REGION="${{ env.GCP_REGION }}"
+          PROJECT="${{ env.GCP_PROJECT_ID }}"
+          BACKEND_SERVICE="${{ env.BACKEND_SERVICE }}"
+          FRONTEND_SERVICE="${{ env.FRONTEND_SERVICE }}"
+          
+          BACKEND_URL=$(gcloud run services describe $BACKEND_SERVICE \
+            --platform=managed \
+            --region=$REGION \
+            --format="value(status.url)" \
+            --project=$PROJECT)
+          
+          FRONTEND_URL=$(gcloud run services describe $FRONTEND_SERVICE \
+            --platform=managed \
+            --region=$REGION \
+            --format="value(status.url)" \
+            --project=$PROJECT)
+          
+          echo "=========================================="
+          echo "✅ DEPLOYMENT COMPLETE!"
+          echo "=========================================="
+          echo ""
+          echo "📦 Services Deployed:"
+          echo "  Backend:  $BACKEND_URL"
+          echo "  Frontend: $FRONTEND_URL"
+          echo ""
+          echo "🔗 Health Checks:"
+          echo "  Backend:  $BACKEND_URL/health"
+          echo "  Frontend: $FRONTEND_URL"
+          echo ""
+          echo "📊 Commit: ${{ github.sha }}"
+          echo "👤 Author: ${{ github.actor }}"
+          echo "=========================================="
+
