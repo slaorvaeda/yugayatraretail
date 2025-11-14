@@ -33,26 +33,58 @@ jobs:
       - name: Build Image Tags
         id: tags
         run: |
-          # Read secrets directly with defaults
+          set -e
+          
+          # Read secrets and apply defaults (handle empty/null strings)
           REGION="${{ secrets.GCP_REGION }}"
           PROJECT="${{ secrets.GCP_PROJECT_ID }}"
           REPO="${{ secrets.GCP_ARTIFACT_REGISTRY }}"
           
-          # Apply defaults if empty
-          REGION="${REGION:-us-central1}"
-          PROJECT="${PROJECT:-yugayatraretail}"
-          REPO="${REPO:-yugayatraretail}"
+          # Remove any whitespace and check if truly empty
+          REGION=$(echo "$REGION" | xargs)
+          PROJECT=$(echo "$PROJECT" | xargs)
+          REPO=$(echo "$REPO" | xargs)
           
-          echo "Using:"
+          # Apply hardcoded defaults if empty or null
+          if [ -z "$REGION" ] || [ "$REGION" = "null" ] || [ "$REGION" = "" ]; then
+            REGION="us-central1"
+            echo "⚠️  Using default REGION: $REGION"
+          fi
+          
+          if [ -z "$PROJECT" ] || [ "$PROJECT" = "null" ] || [ "$PROJECT" = "" ]; then
+            PROJECT="yugayatraretail"
+            echo "⚠️  Using default PROJECT: $PROJECT"
+          fi
+          
+          if [ -z "$REPO" ] || [ "$REPO" = "null" ] || [ "$REPO" = "" ]; then
+            REPO="yugayatraretail"
+            echo "⚠️  Using default REPO: $REPO"
+          fi
+          
+          # Validate values are not empty
+          if [ -z "$REGION" ] || [ -z "$PROJECT" ] || [ -z "$REPO" ]; then
+            echo "❌ ERROR: REGION, PROJECT, or REPO is empty!"
+            exit 1
+          fi
+          
+          echo "✅ Using values:"
           echo "  REGION=$REGION"
           echo "  PROJECT=$PROJECT"
           echo "  REPO=$REPO"
           
-          # Build image tags
+          # Build image tags with validation
           BACKEND_SHA="${REGION}-docker.pkg.dev/${PROJECT}/${REPO}/backend:${GITHUB_SHA}"
           BACKEND_LATEST="${REGION}-docker.pkg.dev/${PROJECT}/${REPO}/backend:latest"
           FRONTEND_SHA="${REGION}-docker.pkg.dev/${PROJECT}/${REPO}/frontend:${GITHUB_SHA}"
           FRONTEND_LATEST="${REGION}-docker.pkg.dev/${PROJECT}/${REPO}/frontend:latest"
+          
+          # Validate tags don't start with dash
+          if [[ "$BACKEND_SHA" == -* ]] || [[ "$FRONTEND_SHA" == -* ]]; then
+            echo "❌ ERROR: Image tag starts with dash! REGION is missing."
+            echo "BACKEND_SHA: $BACKEND_SHA"
+            echo "FRONTEND_SHA: $FRONTEND_SHA"
+            exit 1
+          fi
           
           echo "BACKEND_TAGS=$BACKEND_SHA,$BACKEND_LATEST" >> $GITHUB_OUTPUT
           echo "FRONTEND_TAGS=$FRONTEND_SHA,$FRONTEND_LATEST" >> $GITHUB_OUTPUT
@@ -61,7 +93,7 @@ jobs:
           echo "REPO=$REPO" >> $GITHUB_OUTPUT
           
           echo ""
-          echo "Image tags created:"
+          echo "✅ Image tags created:"
           echo "  Backend: $BACKEND_SHA"
           echo "  Frontend: $FRONTEND_SHA"
 
@@ -109,20 +141,49 @@ jobs:
       - name: Set deployment values
         id: deploy-values
         run: |
-          # Read secrets directly with defaults
+          set -e
+          
+          # Read secrets and apply defaults
           REGION="${{ secrets.GCP_REGION }}"
           PROJECT="${{ secrets.GCP_PROJECT_ID }}"
           REPO="${{ secrets.GCP_ARTIFACT_REGISTRY }}"
           
-          # Apply defaults if empty
-          REGION="${REGION:-us-central1}"
-          PROJECT="${PROJECT:-yugayatraretail}"
-          REPO="${REPO:-yugayatraretail}"
+          # Remove whitespace and check if empty
+          REGION=$(echo "$REGION" | xargs)
+          PROJECT=$(echo "$PROJECT" | xargs)
+          REPO=$(echo "$REPO" | xargs)
+          
+          # Apply hardcoded defaults
+          if [ -z "$REGION" ] || [ "$REGION" = "null" ] || [ "$REGION" = "" ]; then
+            REGION="us-central1"
+          fi
+          
+          if [ -z "$PROJECT" ] || [ "$PROJECT" = "null" ] || [ "$PROJECT" = "" ]; then
+            PROJECT="yugayatraretail"
+          fi
+          
+          if [ -z "$REPO" ] || [ "$REPO" = "null" ] || [ "$REPO" = "" ]; then
+            REPO="yugayatraretail"
+          fi
+          
+          # Build image tag
+          BACKEND_IMAGE="${REGION}-docker.pkg.dev/${PROJECT}/${REPO}/backend:${GITHUB_SHA}"
+          
+          # Validate tag
+          if [[ "$BACKEND_IMAGE" == -* ]]; then
+            echo "❌ ERROR: Image tag starts with dash! REGION is missing."
+            exit 1
+          fi
           
           echo "REGION=$REGION" >> $GITHUB_OUTPUT
           echo "PROJECT=$PROJECT" >> $GITHUB_OUTPUT
           echo "REPO=$REPO" >> $GITHUB_OUTPUT
-          echo "BACKEND_IMAGE=${REGION}-docker.pkg.dev/${PROJECT}/${REPO}/backend:${GITHUB_SHA}" >> $GITHUB_OUTPUT
+          echo "BACKEND_IMAGE=$BACKEND_IMAGE" >> $GITHUB_OUTPUT
+          
+          echo "✅ Deployment values:"
+          echo "  REGION=$REGION"
+          echo "  PROJECT=$PROJECT"
+          echo "  BACKEND_IMAGE=$BACKEND_IMAGE"
 
       - name: Deploy Backend to Cloud Run
         run: |
@@ -169,20 +230,49 @@ jobs:
       - name: Set deployment values
         id: deploy-values
         run: |
-          # Read secrets directly with defaults
+          set -e
+          
+          # Read secrets and apply defaults
           REGION="${{ secrets.GCP_REGION }}"
           PROJECT="${{ secrets.GCP_PROJECT_ID }}"
           REPO="${{ secrets.GCP_ARTIFACT_REGISTRY }}"
           
-          # Apply defaults if empty
-          REGION="${REGION:-us-central1}"
-          PROJECT="${PROJECT:-yugayatraretail}"
-          REPO="${REPO:-yugayatraretail}"
+          # Remove whitespace and check if empty
+          REGION=$(echo "$REGION" | xargs)
+          PROJECT=$(echo "$PROJECT" | xargs)
+          REPO=$(echo "$REPO" | xargs)
+          
+          # Apply hardcoded defaults
+          if [ -z "$REGION" ] || [ "$REGION" = "null" ] || [ "$REGION" = "" ]; then
+            REGION="us-central1"
+          fi
+          
+          if [ -z "$PROJECT" ] || [ "$PROJECT" = "null" ] || [ "$PROJECT" = "" ]; then
+            PROJECT="yugayatraretail"
+          fi
+          
+          if [ -z "$REPO" ] || [ "$REPO" = "null" ] || [ "$REPO" = "" ]; then
+            REPO="yugayatraretail"
+          fi
+          
+          # Build image tag
+          FRONTEND_IMAGE="${REGION}-docker.pkg.dev/${PROJECT}/${REPO}/frontend:${GITHUB_SHA}"
+          
+          # Validate tag
+          if [[ "$FRONTEND_IMAGE" == -* ]]; then
+            echo "❌ ERROR: Image tag starts with dash! REGION is missing."
+            exit 1
+          fi
           
           echo "REGION=$REGION" >> $GITHUB_OUTPUT
           echo "PROJECT=$PROJECT" >> $GITHUB_OUTPUT
           echo "REPO=$REPO" >> $GITHUB_OUTPUT
-          echo "FRONTEND_IMAGE=${REGION}-docker.pkg.dev/${PROJECT}/${REPO}/frontend:${GITHUB_SHA}" >> $GITHUB_OUTPUT
+          echo "FRONTEND_IMAGE=$FRONTEND_IMAGE" >> $GITHUB_OUTPUT
+          
+          echo "✅ Deployment values:"
+          echo "  REGION=$REGION"
+          echo "  PROJECT=$PROJECT"
+          echo "  FRONTEND_IMAGE=$FRONTEND_IMAGE"
 
       - name: Get Backend URL
         id: backend-url
