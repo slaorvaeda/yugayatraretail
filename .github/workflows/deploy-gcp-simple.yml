@@ -32,9 +32,7 @@ jobs:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
 
       - name: Configure Docker for Artifact Registry
-        run: |
-          REGISTRY="${{ secrets.GCP_REGION }}-docker.pkg.dev"
-          gcloud auth configure-docker $REGISTRY
+        run: gcloud auth configure-docker "${{ secrets.GCP_REGION }}-docker.pkg.dev"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
