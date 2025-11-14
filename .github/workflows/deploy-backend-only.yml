@@ -97,6 +97,9 @@ jobs:
           echo "IMAGE_SHA=$IMAGE_SHA" >> $GITHUB_OUTPUT
           echo "IMAGE_LATEST=$IMAGE_LATEST" >> $GITHUB_OUTPUT
           echo "IMAGE_TAGS=$IMAGE_SHA,$IMAGE_LATEST" >> $GITHUB_OUTPUT
+          echo "REGION=$REGION" >> $GITHUB_OUTPUT
+          echo "PROJECT=$PROJECT" >> $GITHUB_OUTPUT
+          echo "REPO=$REPO" >> $GITHUB_OUTPUT
           
           echo ""
           echo "Image tags created:"
@@ -104,7 +107,7 @@ jobs:
           echo "  Latest: $IMAGE_LATEST"
 
       - name: Configure Docker for Artifact Registry
-        run: gcloud auth configure-docker "$GCP_REGION-docker.pkg.dev"
+        run: gcloud auth configure-docker "${{ steps.tags.outputs.REGION }}-docker.pkg.dev"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
