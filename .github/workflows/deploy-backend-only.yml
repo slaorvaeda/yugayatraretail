@@ -101,15 +101,22 @@ jobs:
 
       - name: Set image tags
         id: image-tags
-        env:
-          GCP_REGION: ${{ env.GCP_REGION }}
-          GCP_PROJECT_ID: ${{ env.GCP_PROJECT_ID }}
-          GCP_ARTIFACT_REGISTRY: ${{ env.GCP_ARTIFACT_REGISTRY }}
         run: |
-          # Use env vars or defaults
+          # Use GITHUB_ENV vars set in previous step or defaults
           GCP_REGION="${GCP_REGION:-us-central1}"
           GCP_PROJECT_ID="${GCP_PROJECT_ID:-yugayatraretail}"
           GCP_ARTIFACT_REGISTRY="${GCP_ARTIFACT_REGISTRY:-yugayatraretail}"
+          
+          # Ensure values are set (use defaults if still empty)
+          if [ -z "$GCP_REGION" ] || [ "$GCP_REGION" = "" ]; then
+            GCP_REGION="us-central1"
+          fi
+          if [ -z "$GCP_PROJECT_ID" ] || [ "$GCP_PROJECT_ID" = "" ]; then
+            GCP_PROJECT_ID="yugayatraretail"
+          fi
+          if [ -z "$GCP_ARTIFACT_REGISTRY" ] || [ "$GCP_ARTIFACT_REGISTRY" = "" ]; then
+            GCP_ARTIFACT_REGISTRY="yugayatraretail"
+          fi
           
           echo "Validated values:"
           echo "  GCP_REGION: ${GCP_REGION}"
