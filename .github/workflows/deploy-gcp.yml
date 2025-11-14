@@ -7,9 +7,9 @@ on:
 
 env:
   NODE_VERSION: '20'
-  GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-  GCP_REGION: ${{ secrets.GCP_REGION }}
-  ARTIFACT_REGISTRY: ${{ secrets.GCP_ARTIFACT_REGISTRY }}
+  GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID || 'yugayatraretail' }}
+  GCP_REGION: ${{ secrets.GCP_REGION || 'us-central1' }}
+  ARTIFACT_REGISTRY: ${{ secrets.GCP_ARTIFACT_REGISTRY || 'yugayatraretail' }}
   BACKEND_SERVICE: yugayatra-backend
   FRONTEND_SERVICE: yugayatra-frontend
 
@@ -35,26 +35,15 @@ jobs:
       - name: Validate and set image tags
         id: image-tags
         run: |
+          # Use defaults if secrets not set
           GCP_REGION="${{ secrets.GCP_REGION }}"
           GCP_PROJECT_ID="${{ secrets.GCP_PROJECT_ID }}"
           GCP_ARTIFACT_REGISTRY="${{ secrets.GCP_ARTIFACT_REGISTRY }}"
           
-          # Strict validation
-          if [ -z "${GCP_REGION}" ] || [ "${GCP_REGION}" = "" ] || [ "${GCP_REGION}" = "null" ]; then
-            echo "ERROR: GCP_REGION is empty or not set"
-            echo "Current value: '${GCP_REGION}'"
-            exit 1
-          fi
-          if [ -z "${GCP_PROJECT_ID}" ] || [ "${GCP_PROJECT_ID}" = "" ] || [ "${GCP_PROJECT_ID}" = "null" ]; then
-            echo "ERROR: GCP_PROJECT_ID is empty or not set"
-            echo "Current value: '${GCP_PROJECT_ID}'"
-            exit 1
-          fi
-          if [ -z "${GCP_ARTIFACT_REGISTRY}" ] || [ "${GCP_ARTIFACT_REGISTRY}" = "" ] || [ "${GCP_ARTIFACT_REGISTRY}" = "null" ]; then
-            echo "ERROR: GCP_ARTIFACT_REGISTRY is empty or not set"
-            echo "Current value: '${GCP_ARTIFACT_REGISTRY}'"
-            exit 1
-          fi
+          # Apply defaults if empty
+          GCP_REGION="${GCP_REGION:-us-central1}"
+          GCP_PROJECT_ID="${GCP_PROJECT_ID:-yugayatraretail}"
+          GCP_ARTIFACT_REGISTRY="${GCP_ARTIFACT_REGISTRY:-yugayatraretail}"
           
           echo "Validated values:"
           echo "  GCP_REGION: ${GCP_REGION}"
