@@ -102,26 +102,37 @@ jobs:
       - name: Set image tags
         id: image-tags
         run: |
-          # Use GITHUB_ENV vars set in previous step or defaults
+          # Read from GITHUB_ENV (set in validation step) or use defaults
+          # GITHUB_ENV variables are available as shell environment variables
           GCP_REGION="${GCP_REGION:-us-central1}"
           GCP_PROJECT_ID="${GCP_PROJECT_ID:-yugayatraretail}"
           GCP_ARTIFACT_REGISTRY="${GCP_ARTIFACT_REGISTRY:-yugayatraretail}"
           
-          # Ensure values are set (use defaults if still empty)
-          if [ -z "$GCP_REGION" ] || [ "$GCP_REGION" = "" ]; then
+          # Debug: Show what we got
+          echo "Debug - Raw values from GITHUB_ENV:"
+          echo "  GCP_REGION='$GCP_REGION'"
+          echo "  GCP_PROJECT_ID='$GCP_PROJECT_ID'"
+          echo "  GCP_ARTIFACT_REGISTRY='$GCP_ARTIFACT_REGISTRY'"
+          
+          # Force set defaults if empty (double-check)
+          if [ -z "$GCP_REGION" ] || [ "$GCP_REGION" = "" ] || [ "$GCP_REGION" = "null" ]; then
             GCP_REGION="us-central1"
+            echo "⚠️  GCP_REGION was empty, using default: $GCP_REGION"
           fi
-          if [ -z "$GCP_PROJECT_ID" ] || [ "$GCP_PROJECT_ID" = "" ]; then
+          if [ -z "$GCP_PROJECT_ID" ] || [ "$GCP_PROJECT_ID" = "" ] || [ "$GCP_PROJECT_ID" = "null" ]; then
             GCP_PROJECT_ID="yugayatraretail"
+            echo "⚠️  GCP_PROJECT_ID was empty, using default: $GCP_PROJECT_ID"
           fi
-          if [ -z "$GCP_ARTIFACT_REGISTRY" ] || [ "$GCP_ARTIFACT_REGISTRY" = "" ]; then
+          if [ -z "$GCP_ARTIFACT_REGISTRY" ] || [ "$GCP_ARTIFACT_REGISTRY" = "" ] || [ "$GCP_ARTIFACT_REGISTRY" = "null" ]; then
             GCP_ARTIFACT_REGISTRY="yugayatraretail"
+            echo "⚠️  GCP_ARTIFACT_REGISTRY was empty, using default: $GCP_ARTIFACT_REGISTRY"
           fi
           
-          echo "Validated values:"
-          echo "  GCP_REGION: ${GCP_REGION}"
-          echo "  GCP_PROJECT_ID: ${GCP_PROJECT_ID}"
-          echo "  GCP_ARTIFACT_REGISTRY: ${GCP_ARTIFACT_REGISTRY}"
+          echo ""
+          echo "Final validated values:"
+          echo "  GCP_REGION: '${GCP_REGION}'"
+          echo "  GCP_PROJECT_ID: '${GCP_PROJECT_ID}'"
+          echo "  GCP_ARTIFACT_REGISTRY: '${GCP_ARTIFACT_REGISTRY}'"
           
           IMAGE_TAG_SHA="${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GCP_ARTIFACT_REGISTRY}/backend:${{ github.sha }}"
           IMAGE_TAG_LATEST="${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GCP_ARTIFACT_REGISTRY}/backend:latest"
