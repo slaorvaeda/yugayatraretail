@@ -176,8 +176,12 @@ jobs:
 
       - name: Set image tag for deployment
         id: deploy-image
+        env:
+          GCP_REGION: ${{ env.GCP_REGION }}
+          GCP_PROJECT_ID: ${{ env.GCP_PROJECT_ID }}
+          GCP_ARTIFACT_REGISTRY: ${{ env.ARTIFACT_REGISTRY }}
         run: |
-          # Use defaults if secrets not set
+          # Use env vars or defaults
           GCP_REGION="${GCP_REGION:-us-central1}"
           GCP_PROJECT_ID="${GCP_PROJECT_ID:-yugayatraretail}"
           GCP_ARTIFACT_REGISTRY="${GCP_ARTIFACT_REGISTRY:-yugayatraretail}"
@@ -186,6 +190,10 @@ jobs:
           echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_OUTPUT
           echo "GCP_REGION=$GCP_REGION" >> $GITHUB_OUTPUT
           echo "GCP_PROJECT_ID=$GCP_PROJECT_ID" >> $GITHUB_OUTPUT
+          
+          echo "Deployment image tag: $IMAGE_TAG"
+          echo "Region: $GCP_REGION"
+          echo "Project: $GCP_PROJECT_ID"
 
       - name: Deploy Backend to Cloud Run
         run: |
