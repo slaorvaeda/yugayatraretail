@@ -42,49 +42,60 @@ jobs:
           
           MISSING_SECRETS=0
           
-          if [ -z "${{ secrets.GCP_REGION }}" ]; then
-            echo "❌ ERROR: GCP_REGION secret is NOT SET"
+          # Check GCP_REGION
+          GCP_REGION_VALUE="${{ secrets.GCP_REGION }}"
+          if [ -z "$GCP_REGION_VALUE" ] || [ "$GCP_REGION_VALUE" = "" ] || [ "$GCP_REGION_VALUE" = "null" ]; then
+            echo "❌ ERROR: GCP_REGION secret is NOT SET or is EMPTY"
             echo "   Go to: https://github.com/${{ github.repository }}/settings/secrets/actions"
-            echo "   Add secret: GCP_REGION = us-central1 (or your region)"
+            echo "   Add secret: GCP_REGION = us-central1"
+            echo "   Current value: '$GCP_REGION_VALUE'"
             MISSING_SECRETS=1
           else
-            echo "✅ GCP_REGION: ${{ secrets.GCP_REGION }}"
+            echo "✅ GCP_REGION: $GCP_REGION_VALUE"
           fi
           
-          if [ -z "${{ secrets.GCP_PROJECT_ID }}" ]; then
-            echo "❌ ERROR: GCP_PROJECT_ID secret is NOT SET"
+          # Check GCP_PROJECT_ID
+          GCP_PROJECT_ID_VALUE="${{ secrets.GCP_PROJECT_ID }}"
+          if [ -z "$GCP_PROJECT_ID_VALUE" ] || [ "$GCP_PROJECT_ID_VALUE" = "" ] || [ "$GCP_PROJECT_ID_VALUE" = "null" ]; then
+            echo "❌ ERROR: GCP_PROJECT_ID secret is NOT SET or is EMPTY"
             echo "   Go to: https://github.com/${{ github.repository }}/settings/secrets/actions"
-            echo "   Add secret: GCP_PROJECT_ID = your-project-id"
+            echo "   Add secret: GCP_PROJECT_ID = yugayatraretail"
+            echo "   Current value: '$GCP_PROJECT_ID_VALUE'"
             MISSING_SECRETS=1
           else
-            echo "✅ GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}"
+            echo "✅ GCP_PROJECT_ID: $GCP_PROJECT_ID_VALUE"
           fi
           
-          if [ -z "${{ secrets.GCP_ARTIFACT_REGISTRY }}" ]; then
-            echo "❌ ERROR: GCP_ARTIFACT_REGISTRY secret is NOT SET"
+          # Check GCP_ARTIFACT_REGISTRY
+          GCP_ARTIFACT_REGISTRY_VALUE="${{ secrets.GCP_ARTIFACT_REGISTRY }}"
+          if [ -z "$GCP_ARTIFACT_REGISTRY_VALUE" ] || [ "$GCP_ARTIFACT_REGISTRY_VALUE" = "" ] || [ "$GCP_ARTIFACT_REGISTRY_VALUE" = "null" ]; then
+            echo "❌ ERROR: GCP_ARTIFACT_REGISTRY secret is NOT SET or is EMPTY"
             echo "   Go to: https://github.com/${{ github.repository }}/settings/secrets/actions"
-            echo "   Add secret: GCP_ARTIFACT_REGISTRY = your-registry-name"
+            echo "   Add secret: GCP_ARTIFACT_REGISTRY = yugayatraretail"
+            echo "   Current value: '$GCP_ARTIFACT_REGISTRY_VALUE'"
             MISSING_SECRETS=1
           else
-            echo "✅ GCP_ARTIFACT_REGISTRY: ${{ secrets.GCP_ARTIFACT_REGISTRY }}"
+            echo "✅ GCP_ARTIFACT_REGISTRY: $GCP_ARTIFACT_REGISTRY_VALUE"
           fi
           
-          if [ -z "${{ secrets.GCP_SA_KEY }}" ]; then
-            echo "❌ ERROR: GCP_SA_KEY secret is NOT SET"
+          # Check GCP_SA_KEY
+          GCP_SA_KEY_VALUE="${{ secrets.GCP_SA_KEY }}"
+          if [ -z "$GCP_SA_KEY_VALUE" ] || [ "$GCP_SA_KEY_VALUE" = "" ] || [ "$GCP_SA_KEY_VALUE" = "null" ]; then
+            echo "❌ ERROR: GCP_SA_KEY secret is NOT SET or is EMPTY"
             echo "   Go to: https://github.com/${{ github.repository }}/settings/secrets/actions"
-            echo "   Add secret: GCP_SA_KEY = (JSON content from github-actions-key.json)"
+            echo "   Add secret: GCP_SA_KEY = (Full JSON content from github-actions-key.json)"
             MISSING_SECRETS=1
           else
-            echo "✅ GCP_SA_KEY: Set (hidden)"
+            echo "✅ GCP_SA_KEY: Set (hidden, length: ${#GCP_SA_KEY_VALUE} chars)"
           fi
           
           echo "=========================================="
           if [ $MISSING_SECRETS -eq 1 ]; then
-            echo "❌ FAILED: Missing required secrets!"
+            echo "❌ FAILED: Missing or empty required secrets!"
             echo "Please add the missing secrets above and re-run the workflow."
             exit 1
           else
-            echo "✅ All required secrets are set!"
+            echo "✅ All required secrets are set and non-empty!"
           fi
           echo "=========================================="
 
@@ -95,19 +106,53 @@ jobs:
           GCP_PROJECT_ID="${{ secrets.GCP_PROJECT_ID }}"
           GCP_ARTIFACT_REGISTRY="${{ secrets.GCP_ARTIFACT_REGISTRY }}"
           
+          # Validate again with strict checks
+          if [ -z "${GCP_REGION}" ] || [ "${GCP_REGION}" = "" ] || [ "${GCP_REGION}" = "null" ]; then
+            echo "ERROR: GCP_REGION is empty or not set"
+            echo "Current value: '${GCP_REGION}'"
+            exit 1
+          fi
+          
+          if [ -z "${GCP_PROJECT_ID}" ] || [ "${GCP_PROJECT_ID}" = "" ] || [ "${GCP_PROJECT_ID}" = "null" ]; then
+            echo "ERROR: GCP_PROJECT_ID is empty or not set"
+            echo "Current value: '${GCP_PROJECT_ID}'"
+            exit 1
+          fi
+          
+          if [ -z "${GCP_ARTIFACT_REGISTRY}" ] || [ "${GCP_ARTIFACT_REGISTRY}" = "" ] || [ "${GCP_ARTIFACT_REGISTRY}" = "null" ]; then
+            echo "ERROR: GCP_ARTIFACT_REGISTRY is empty or not set"
+            echo "Current value: '${GCP_ARTIFACT_REGISTRY}'"
+            exit 1
+          fi
+          
+          echo "Validated values:"
+          echo "  GCP_REGION: ${GCP_REGION}"
+          echo "  GCP_PROJECT_ID: ${GCP_PROJECT_ID}"
+          echo "  GCP_ARTIFACT_REGISTRY: ${GCP_ARTIFACT_REGISTRY}"
+          
           IMAGE_TAG_SHA="${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GCP_ARTIFACT_REGISTRY}/backend:${{ github.sha }}"
           IMAGE_TAG_LATEST="${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GCP_ARTIFACT_REGISTRY}/backend:latest"
+          
+          # Validate the constructed tags
+          if [[ "$IMAGE_TAG_SHA" == *"-docker.pkg.dev"* ]] && [[ "$IMAGE_TAG_SHA" != *"us-central1-docker.pkg.dev"* ]] && [[ "$IMAGE_TAG_SHA" != *"asia-south1-docker.pkg.dev"* ]]; then
+            echo "ERROR: Invalid image tag format - region is missing"
+            echo "Tag: $IMAGE_TAG_SHA"
+            exit 1
+          fi
           
           echo "IMAGE_TAG_SHA=$IMAGE_TAG_SHA" >> $GITHUB_OUTPUT
           echo "IMAGE_TAG_LATEST=$IMAGE_TAG_LATEST" >> $GITHUB_OUTPUT
           echo "IMAGE_TAGS=$IMAGE_TAG_SHA,$IMAGE_TAG_LATEST" >> $GITHUB_OUTPUT
+          echo "GCP_REGION=$GCP_REGION" >> $GITHUB_OUTPUT
+          echo "GCP_PROJECT_ID=$GCP_PROJECT_ID" >> $GITHUB_OUTPUT
+          echo "GCP_ARTIFACT_REGISTRY=$GCP_ARTIFACT_REGISTRY" >> $GITHUB_OUTPUT
           
           echo "Image tags created:"
           echo "  SHA: $IMAGE_TAG_SHA"
           echo "  Latest: $IMAGE_TAG_LATEST"
 
       - name: Configure Docker for Artifact Registry
-        run: gcloud auth configure-docker "${{ secrets.GCP_REGION }}-docker.pkg.dev"
+        run: gcloud auth configure-docker "${{ steps.image-tags.outputs.GCP_REGION }}-docker.pkg.dev"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3

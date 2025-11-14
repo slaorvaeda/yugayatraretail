@@ -39,28 +39,39 @@ jobs:
           GCP_PROJECT_ID="${{ secrets.GCP_PROJECT_ID }}"
           GCP_ARTIFACT_REGISTRY="${{ secrets.GCP_ARTIFACT_REGISTRY }}"
           
-          if [ -z "$GCP_REGION" ] || [ "$GCP_REGION" = "" ]; then
-            echo "ERROR: GCP_REGION secret is not set or is empty"
+          # Strict validation
+          if [ -z "${GCP_REGION}" ] || [ "${GCP_REGION}" = "" ] || [ "${GCP_REGION}" = "null" ]; then
+            echo "ERROR: GCP_REGION is empty or not set"
+            echo "Current value: '${GCP_REGION}'"
             exit 1
           fi
-          if [ -z "$GCP_PROJECT_ID" ] || [ "$GCP_PROJECT_ID" = "" ]; then
-            echo "ERROR: GCP_PROJECT_ID secret is not set or is empty"
+          if [ -z "${GCP_PROJECT_ID}" ] || [ "${GCP_PROJECT_ID}" = "" ] || [ "${GCP_PROJECT_ID}" = "null" ]; then
+            echo "ERROR: GCP_PROJECT_ID is empty or not set"
+            echo "Current value: '${GCP_PROJECT_ID}'"
             exit 1
           fi
-          if [ -z "$GCP_ARTIFACT_REGISTRY" ] || [ "$GCP_ARTIFACT_REGISTRY" = "" ]; then
-            echo "ERROR: GCP_ARTIFACT_REGISTRY secret is not set or is empty"
+          if [ -z "${GCP_ARTIFACT_REGISTRY}" ] || [ "${GCP_ARTIFACT_REGISTRY}" = "" ] || [ "${GCP_ARTIFACT_REGISTRY}" = "null" ]; then
+            echo "ERROR: GCP_ARTIFACT_REGISTRY is empty or not set"
+            echo "Current value: '${GCP_ARTIFACT_REGISTRY}'"
             exit 1
           fi
           
-          echo "All required secrets are set"
-          echo "GCP_REGION: $GCP_REGION"
-          echo "GCP_PROJECT_ID: $GCP_PROJECT_ID"
-          echo "GCP_ARTIFACT_REGISTRY: $GCP_ARTIFACT_REGISTRY"
+          echo "Validated values:"
+          echo "  GCP_REGION: ${GCP_REGION}"
+          echo "  GCP_PROJECT_ID: ${GCP_PROJECT_ID}"
+          echo "  GCP_ARTIFACT_REGISTRY: ${GCP_ARTIFACT_REGISTRY}"
           
           BACKEND_TAG_SHA="${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GCP_ARTIFACT_REGISTRY}/backend:${{ github.sha }}"
           BACKEND_TAG_LATEST="${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GCP_ARTIFACT_REGISTRY}/backend:latest"
           FRONTEND_TAG_SHA="${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GCP_ARTIFACT_REGISTRY}/frontend:${{ github.sha }}"
           FRONTEND_TAG_LATEST="${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GCP_ARTIFACT_REGISTRY}/frontend:latest"
+          
+          # Validate constructed tags
+          if [[ "$BACKEND_TAG_SHA" == *"-docker.pkg.dev"* ]] && [[ "$BACKEND_TAG_SHA" != *"us-central1-docker.pkg.dev"* ]] && [[ "$BACKEND_TAG_SHA" != *"asia-south1-docker.pkg.dev"* ]]; then
+            echo "ERROR: Invalid image tag format - region is missing"
+            echo "Tag: $BACKEND_TAG_SHA"
+            exit 1
+          fi
           
           echo "BACKEND_TAGS=$BACKEND_TAG_SHA,$BACKEND_TAG_LATEST" >> $GITHUB_OUTPUT
           echo "FRONTEND_TAGS=$FRONTEND_TAG_SHA,$FRONTEND_TAG_LATEST" >> $GITHUB_OUTPUT
