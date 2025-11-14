@@ -75,18 +75,24 @@ jobs:
       - name: Build Image Tags
         id: tags
         run: |
-          # Ensure variables are set (use defaults if GITHUB_ENV didn't work)
-          GCP_REGION="${GCP_REGION:-us-central1}"
-          GCP_PROJECT_ID="${GCP_PROJECT_ID:-yugayatraretail}"
-          GCP_ARTIFACT_REGISTRY="${GCP_ARTIFACT_REGISTRY:-yugayatraretail}"
+          # Clean defaults (never allow empty)
+          REGION="${{ secrets.GCP_REGION }}"
+          PROJECT="${{ secrets.GCP_PROJECT_ID }}"
+          REPO="${{ secrets.GCP_ARTIFACT_REGISTRY }}"
           
-          echo "Building tags with:"
-          echo "  GCP_REGION: $GCP_REGION"
-          echo "  GCP_PROJECT_ID: $GCP_PROJECT_ID"
-          echo "  GCP_ARTIFACT_REGISTRY: $GCP_ARTIFACT_REGISTRY"
+          # Fallbacks
+          REGION="${REGION:-us-central1}"
+          PROJECT="${PROJECT:-yugayatraretail}"
+          REPO="${REPO:-yugayatraretail}"
           
-          IMAGE_SHA="$GCP_REGION-docker.pkg.dev/$GCP_PROJECT_ID/$GCP_ARTIFACT_REGISTRY/backend:${{ github.sha }}"
-          IMAGE_LATEST="$GCP_REGION-docker.pkg.dev/$GCP_PROJECT_ID/$GCP_ARTIFACT_REGISTRY/backend:latest"
+          echo "Using:"
+          echo "  REGION=$REGION"
+          echo "  PROJECT=$PROJECT"
+          echo "  REPO=$REPO"
+          
+          # FINAL VALID TAGS
+          IMAGE_SHA="${REGION}-docker.pkg.dev/${PROJECT}/${REPO}/backend:${GITHUB_SHA}"
+          IMAGE_LATEST="${REGION}-docker.pkg.dev/${PROJECT}/${REPO}/backend:latest"
           
           echo "IMAGE_SHA=$IMAGE_SHA" >> $GITHUB_OUTPUT
           echo "IMAGE_LATEST=$IMAGE_LATEST" >> $GITHUB_OUTPUT
