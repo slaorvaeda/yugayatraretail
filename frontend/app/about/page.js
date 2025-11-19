@@ -9,8 +9,11 @@ import FourDSharing from '../components/FourDSharing';
 import SharingNewWay from '../components/SharingNewWay';
 import ToSomethingEverything from '../components/ToSomethingEverything';
 import ContactsUs from '../components/ContactsUs';
+import Loader from '../components/Loader';
+import { usePageLoader } from '../components/usePageLoader';
 
 export default function AboutPage() {
+  const loading = usePageLoader(300);
   const scrollbarRef = useRef(null);
   const [scrollProgress, setScrollProgress] = useState(0);
 
@@ -34,6 +37,10 @@ export default function AboutPage() {
       window.removeEventListener('scroll', handleScroll);
     };
   }, []);
+
+  if (loading) {
+    return <Loader fullScreen={true} message="Loading..." />;
+  }
 
   return (
     <div className="min-h-screen relative" style={{ backgroundColor: '#F8F8F8' }}>

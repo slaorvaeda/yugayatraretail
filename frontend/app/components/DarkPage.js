@@ -50,7 +50,8 @@ export default function DarkPage() {
             </h3>
             <p className="text-sm text-gray-300 leading-relaxed">
               Cutting-edge solutions that revolutionize how businesses operate. 
-              Our platform integrates seamlessly with existing systems.
+              Our platform integrates seamlessly with existing systems and provides 
+              unprecedented scalability for modern enterprises.
             </p>
           </div>
 
@@ -64,7 +65,8 @@ export default function DarkPage() {
             </h3>
             <p className="text-sm text-gray-300 leading-relaxed">
               Connect with partners worldwide through our secure, 
-              high-performance network infrastructure.
+              high-performance network infrastructure. Experience 
+              lightning-fast data transfer and real-time collaboration.
             </p>
           </div>
 
@@ -78,7 +80,8 @@ export default function DarkPage() {
             </h3>
             <p className="text-sm text-gray-300 leading-relaxed">
               Pioneering the next generation of digital transformation. 
-              Experience tomorrow&apos;s technology today.
+              Experience tomorrow&apos;s technology today with our revolutionary 
+              approach to modern business solutions.
             </p>
           </div>
         </div>

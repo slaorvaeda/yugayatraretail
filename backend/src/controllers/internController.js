@@ -2,9 +2,36 @@ import { ZodError } from 'zod';
 import { supabase } from '../config/supabaseClient.js';
 import { routineEntrySchema, progressionSchema } from '../validators/adminValidators.js';
 
+import { isValidUUID } from '../middleware/security.js';
+
 export const getInternDashboard = async (req, res, next) => {
   try {
-    const internId = req.user.role === 'admin' ? req.params.internId : req.user.id;
+    let internId;
+    
+    if (req.user.role === 'admin') {
+      // Admin can access any intern's dashboard
+      internId = req.params.internId;
+      
+      // Validate internId format
+      if (!isValidUUID(internId)) {
+        return res.status(400).json({ message: 'Invalid intern ID format' });
+      }
+      
+      // Verify the user is actually an intern
+      const { data: user } = await supabase
+        .from('users')
+        .select('id, role')
+        .eq('id', internId)
+        .eq('role', 'intern')
+        .maybeSingle();
+        
+      if (!user) {
+        return res.status(404).json({ message: 'Intern not found' });
+      }
+    } else {
+      // Interns can only access their own dashboard
+      internId = req.user.id;
+    }
 
     const [
       { data: user, error: userError },

@@ -1,0 +1,568 @@
+name: Validate Configuration & Secrets
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/validate-config.yml'
+  schedule:
+    # Run daily at 2 AM UTC to catch any issues
+    - cron: '0 2 * * *'
+
+env:
+  NODE_VERSION: "20"
+  BACKEND_SERVICE: yugayatra-backend
+  FRONTEND_SERVICE: yugayatra-frontend
+  GCP_REGION: us-central1
+  GCP_PROJECT_ID: yugayatraretail
+  GCP_ARTIFACT_REGISTRY: yugayatraretail
+  BACKEND_PORT: 5001
+  FRONTEND_PORT: 3000
+
+jobs:
+  validate-secrets:
+    name: Validate Secrets & Variables
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate Required Secrets
+        id: required-secrets
+        run: |
+          echo "=========================================="
+          echo "🔍 Validating Required Secrets"
+          echo "=========================================="
+          
+          ERRORS=0
+          WARNINGS=0
+          
+          # Check GCP_SA_KEY (Required)
+          if [ -z "${{ secrets.GCP_SA_KEY }}" ]; then
+            echo "❌ GCP_SA_KEY: NOT SET (REQUIRED)"
+            ERRORS=$((ERRORS + 1))
+          else
+            LENGTH=$(echo -n "${{ secrets.GCP_SA_KEY }}" | wc -c)
+            echo "✅ GCP_SA_KEY: SET (length: $LENGTH chars)"
+            
+            # Validate JSON format
+            echo "${{ secrets.GCP_SA_KEY }}" | jq -e . > /dev/null 2>&1
+            if [ $? -eq 0 ]; then
+              echo "   ✅ Valid JSON format"
+              PROJECT_ID=$(echo "${{ secrets.GCP_SA_KEY }}" | jq -r '.project_id // empty')
+              CLIENT_EMAIL=$(echo "${{ secrets.GCP_SA_KEY }}" | jq -r '.client_email // empty')
+              echo "   📋 Project ID: $PROJECT_ID"
+              echo "   📋 Client Email: $CLIENT_EMAIL"
+            else
+              echo "   ❌ Invalid JSON format"
+              ERRORS=$((ERRORS + 1))
+            fi
+          fi
+          
+          # Check SUPABASE_URL (Required)
+          if [ -z "${{ secrets.SUPABASE_URL }}" ]; then
+            echo "❌ SUPABASE_URL: NOT SET (REQUIRED)"
+            ERRORS=$((ERRORS + 1))
+          else
+            echo "✅ SUPABASE_URL: SET"
+            echo "   📋 Value: ${{ secrets.SUPABASE_URL }}"
+          fi
+          
+          # Check SUPABASE_SERVICE_ROLE_KEY (Required)
+          if [ -z "${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" ]; then
+            echo "❌ SUPABASE_SERVICE_ROLE_KEY: NOT SET (REQUIRED)"
+            ERRORS=$((ERRORS + 1))
+          else
+            LENGTH=$(echo -n "${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" | wc -c)
+            echo "✅ SUPABASE_SERVICE_ROLE_KEY: SET (length: $LENGTH chars)"
+          fi
+          
+          # Check JWT_SECRET (Required)
+          if [ -z "${{ secrets.JWT_SECRET }}" ]; then
+            echo "❌ JWT_SECRET: NOT SET (REQUIRED)"
+            ERRORS=$((ERRORS + 1))
+          else
+            LENGTH=$(echo -n "${{ secrets.JWT_SECRET }}" | wc -c)
+            echo "✅ JWT_SECRET: SET (length: $LENGTH chars)"
+            if [ $LENGTH -lt 32 ]; then
+              echo "   ⚠️  WARNING: JWT_SECRET should be at least 32 characters"
+              WARNINGS=$((WARNINGS + 1))
+            fi
+          fi
+          
+          # Check CLOUDINARY secrets (Required)
+          if [ -z "${{ secrets.CLOUDINARY_CLOUD_NAME }}" ]; then
+            echo "❌ CLOUDINARY_CLOUD_NAME: NOT SET (REQUIRED)"
+            ERRORS=$((ERRORS + 1))
+          else
+            echo "✅ CLOUDINARY_CLOUD_NAME: SET"
+          fi
+          
+          if [ -z "${{ secrets.CLOUDINARY_API_KEY }}" ]; then
+            echo "❌ CLOUDINARY_API_KEY: NOT SET (REQUIRED)"
+            ERRORS=$((ERRORS + 1))
+          else
+            echo "✅ CLOUDINARY_API_KEY: SET"
+          fi
+          
+          if [ -z "${{ secrets.CLOUDINARY_API_SECRET }}" ]; then
+            echo "❌ CLOUDINARY_API_SECRET: NOT SET (REQUIRED)"
+            ERRORS=$((ERRORS + 1))
+          else
+            echo "✅ CLOUDINARY_API_SECRET: SET"
+          fi
+          
+          echo ""
+          echo "=========================================="
+          echo "📊 Required Secrets Summary"
+          echo "=========================================="
+          echo "Errors: $ERRORS"
+          echo "Warnings: $WARNINGS"
+          echo "=========================================="
+          
+          echo "errors=$ERRORS" >> $GITHUB_OUTPUT
+          echo "warnings=$WARNINGS" >> $GITHUB_OUTPUT
+          
+          if [ $ERRORS -gt 0 ]; then
+            echo "❌ Validation failed: $ERRORS required secret(s) missing or invalid"
+            exit 1
+          fi
+
+      - name: Validate Optional Secrets
+        id: optional-secrets
+        run: |
+          echo "=========================================="
+          echo "🔍 Validating Optional Secrets"
+          echo "=========================================="
+          
+          # Check GCP_REGION
+          GCP_REGION="${{ secrets.GCP_REGION }}"
+          if [ -z "$GCP_REGION" ] || [ "$GCP_REGION" = "" ]; then
+            echo "⚠️  GCP_REGION: Not set (will use default: ${{ env.GCP_REGION }})"
+          else
+            echo "✅ GCP_REGION: $GCP_REGION"
+          fi
+          
+          # Check GCP_PROJECT_ID
+          GCP_PROJECT_ID="${{ secrets.GCP_PROJECT_ID }}"
+          if [ -z "$GCP_PROJECT_ID" ] || [ "$GCP_PROJECT_ID" = "" ]; then
+            echo "⚠️  GCP_PROJECT_ID: Not set (will use default: ${{ env.GCP_PROJECT_ID }})"
+          else
+            echo "✅ GCP_PROJECT_ID: $GCP_PROJECT_ID"
+          fi
+          
+          # Check GCP_ARTIFACT_REGISTRY
+          GCP_ARTIFACT_REGISTRY="${{ secrets.GCP_ARTIFACT_REGISTRY }}"
+          if [ -z "$GCP_ARTIFACT_REGISTRY" ] || [ "$GCP_ARTIFACT_REGISTRY" = "" ]; then
+            echo "⚠️  GCP_ARTIFACT_REGISTRY: Not set (will use default: ${{ env.GCP_ARTIFACT_REGISTRY }})"
+          else
+            echo "✅ GCP_ARTIFACT_REGISTRY: $GCP_ARTIFACT_REGISTRY"
+          fi
+          
+          # Check CLIENT_URL
+          if [ -z "${{ secrets.CLIENT_URL }}" ]; then
+            echo "⚠️  CLIENT_URL: Not set (will be set automatically after frontend deployment)"
+          else
+            echo "✅ CLIENT_URL: ${{ secrets.CLIENT_URL }}"
+          fi
+          
+          # Check NEXT_PUBLIC_API_BASE_URL
+          if [ -z "${{ secrets.NEXT_PUBLIC_API_BASE_URL }}" ]; then
+            echo "⚠️  NEXT_PUBLIC_API_BASE_URL: Not set (will use backend URL after deployment)"
+          else
+            echo "✅ NEXT_PUBLIC_API_BASE_URL: ${{ secrets.NEXT_PUBLIC_API_BASE_URL }}"
+          fi
+          
+          echo "=========================================="
+
+      - name: Validate Environment Variables
+        run: |
+          echo "=========================================="
+          echo "🔍 Validating Environment Variables"
+          echo "=========================================="
+          
+          echo "✅ NODE_VERSION: ${{ env.NODE_VERSION }}"
+          echo "✅ BACKEND_SERVICE: ${{ env.BACKEND_SERVICE }}"
+          echo "✅ FRONTEND_SERVICE: ${{ env.FRONTEND_SERVICE }}"
+          echo "✅ GCP_REGION: ${{ env.GCP_REGION }}"
+          echo "✅ GCP_PROJECT_ID: ${{ env.GCP_PROJECT_ID }}"
+          echo "✅ GCP_ARTIFACT_REGISTRY: ${{ env.GCP_ARTIFACT_REGISTRY }}"
+          echo "✅ BACKEND_PORT: ${{ env.BACKEND_PORT }}"
+          echo "✅ FRONTEND_PORT: ${{ env.FRONTEND_PORT }}"
+          
+          echo "=========================================="
+
+      - name: Validate Image Tag Format
+        run: |
+          echo "=========================================="
+          echo "🔍 Validating Image Tag Format"
+          echo "=========================================="
+          
+          # Get values with fallbacks
+          REGION="${{ secrets.GCP_REGION }}"
+          PROJECT="${{ secrets.GCP_PROJECT_ID }}"
+          REPO="${{ secrets.GCP_ARTIFACT_REGISTRY }}"
+          
+          REGION=$(echo "$REGION" | xargs)
+          PROJECT=$(echo "$PROJECT" | xargs)
+          REPO=$(echo "$REPO" | xargs)
+          
+          if [ -z "$REGION" ] || [ "$REGION" = "null" ] || [ "$REGION" = "" ]; then
+            REGION="${{ env.GCP_REGION }}"
+          fi
+          
+          if [ -z "$PROJECT" ] || [ "$PROJECT" = "null" ] || [ "$PROJECT" = "" ]; then
+            PROJECT="${{ env.GCP_PROJECT_ID }}"
+          fi
+          
+          if [ -z "$REPO" ] || [ "$REPO" = "null" ] || [ "$REPO" = "" ]; then
+            REPO="${{ env.GCP_ARTIFACT_REGISTRY }}"
+          fi
+          
+          # Build sample tags
+          BACKEND_TAG="${REGION}-docker.pkg.dev/${PROJECT}/${REPO}/backend:test"
+          FRONTEND_TAG="${REGION}-docker.pkg.dev/${PROJECT}/${REPO}/frontend:test"
+          
+          echo "Backend tag format: $BACKEND_TAG"
+          echo "Frontend tag format: $FRONTEND_TAG"
+          
+          # Validate tags don't start with dash
+          if [[ "$BACKEND_TAG" == -* ]] || [[ "$FRONTEND_TAG" == -* ]]; then
+            echo "❌ ERROR: Image tag starts with dash! REGION is missing."
+            exit 1
+          fi
+          
+          # Validate format
+          if [[ ! "$BACKEND_TAG" =~ ^[a-z0-9-]+-docker\.pkg\.dev/[a-z0-9-]+/[a-z0-9-]+/backend:.+$ ]]; then
+            echo "❌ ERROR: Invalid backend tag format"
+            exit 1
+          fi
+          
+          if [[ ! "$FRONTEND_TAG" =~ ^[a-z0-9-]+-docker\.pkg\.dev/[a-z0-9-]+/[a-z0-9-]+/frontend:.+$ ]]; then
+            echo "❌ ERROR: Invalid frontend tag format"
+            exit 1
+          fi
+          
+          echo "✅ Image tag format is valid"
+          echo "=========================================="
+
+  validate-gcp-connection:
+    name: Validate GCP Connection
+    runs-on: ubuntu-latest
+    needs: validate-secrets
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+
+      - name: Validate GCP Authentication
+        run: |
+          echo "=========================================="
+          echo "🔍 Validating GCP Authentication"
+          echo "=========================================="
+          
+          # Get current account
+          ACCOUNT=$(gcloud auth list --filter=status:ACTIVE --format="value(account)")
+          if [ -z "$ACCOUNT" ]; then
+            echo "❌ No active GCP account found"
+            exit 1
+          fi
+          
+          echo "✅ Authenticated as: $ACCOUNT"
+          echo "=========================================="
+
+      - name: Validate GCP Project Access
+        run: |
+          echo "=========================================="
+          echo "🔍 Validating GCP Project Access"
+          echo "=========================================="
+          
+          # Get values with fallbacks
+          REGION="${{ secrets.GCP_REGION }}"
+          PROJECT="${{ secrets.GCP_PROJECT_ID }}"
+          
+          REGION=$(echo "$REGION" | xargs)
+          PROJECT=$(echo "$PROJECT" | xargs)
+          
+          if [ -z "$REGION" ] || [ "$REGION" = "null" ] || [ "$REGION" = "" ]; then
+            REGION="${{ env.GCP_REGION }}"
+          fi
+          
+          if [ -z "$PROJECT" ] || [ "$PROJECT" = "null" ] || [ "$PROJECT" = "" ]; then
+            PROJECT="${{ env.GCP_PROJECT_ID }}"
+          fi
+          
+          # Set project
+          gcloud config set project $PROJECT
+          
+          # Verify project access
+          PROJECT_INFO=$(gcloud projects describe $PROJECT --format="value(projectId,name)" 2>&1)
+          if [ $? -ne 0 ]; then
+            echo "❌ Cannot access project: $PROJECT"
+            echo "$PROJECT_INFO"
+            exit 1
+          fi
+          
+          echo "✅ Project accessible: $PROJECT"
+          echo "   Project info: $PROJECT_INFO"
+          
+          # Check if required APIs are enabled
+          echo ""
+          echo "Checking required APIs..."
+          
+          # Cloud Run API
+          if gcloud services list --enabled --filter="name:run.googleapis.com" --format="value(name)" | grep -q "run.googleapis.com"; then
+            echo "✅ Cloud Run API: Enabled"
+          else
+            echo "❌ Cloud Run API: Not enabled"
+            exit 1
+          fi
+          
+          # Artifact Registry API
+          if gcloud services list --enabled --filter="name:artifactregistry.googleapis.com" --format="value(name)" | grep -q "artifactregistry.googleapis.com"; then
+            echo "✅ Artifact Registry API: Enabled"
+          else
+            echo "❌ Artifact Registry API: Not enabled"
+            exit 1
+          fi
+          
+          echo "=========================================="
+
+      - name: Validate Artifact Registry Access
+        run: |
+          echo "=========================================="
+          echo "🔍 Validating Artifact Registry Access"
+          echo "=========================================="
+          
+          # Get values with fallbacks
+          REGION="${{ secrets.GCP_REGION }}"
+          PROJECT="${{ secrets.GCP_PROJECT_ID }}"
+          REPO="${{ secrets.GCP_ARTIFACT_REGISTRY }}"
+          
+          REGION=$(echo "$REGION" | xargs)
+          PROJECT=$(echo "$PROJECT" | xargs)
+          REPO=$(echo "$REPO" | xargs)
+          
+          if [ -z "$REGION" ] || [ "$REGION" = "null" ] || [ "$REGION" = "" ]; then
+            REGION="${{ env.GCP_REGION }}"
+          fi
+          
+          if [ -z "$PROJECT" ] || [ "$PROJECT" = "null" ] || [ "$PROJECT" = "" ]; then
+            PROJECT="${{ env.GCP_PROJECT_ID }}"
+          fi
+          
+          if [ -z "$REPO" ] || [ "$REPO" = "null" ] || [ "$REPO" = "" ]; then
+            REPO="${{ env.GCP_ARTIFACT_REGISTRY }}"
+          fi
+          
+          # Configure Docker
+          gcloud auth configure-docker ${REGION}-docker.pkg.dev --quiet
+          
+          # Check if repository exists
+          REPO_PATH="${REGION}-docker.pkg.dev/${PROJECT}/${REPO}"
+          if gcloud artifacts repositories describe $REPO --location=$REGION --format="value(name)" 2>/dev/null | grep -q "$REPO"; then
+            echo "✅ Artifact Registry repository exists: $REPO_PATH"
+          else
+            echo "⚠️  Artifact Registry repository not found: $REPO_PATH"
+            echo "   Repository will be created on first push"
+          fi
+          
+          echo "=========================================="
+
+      - name: Validate Cloud Run Services
+        run: |
+          echo "=========================================="
+          echo "🔍 Validating Cloud Run Services"
+          echo "=========================================="
+          
+          # Get values with fallbacks
+          REGION="${{ secrets.GCP_REGION }}"
+          PROJECT="${{ secrets.GCP_PROJECT_ID }}"
+          BACKEND_SERVICE="${{ env.BACKEND_SERVICE }}"
+          FRONTEND_SERVICE="${{ env.FRONTEND_SERVICE }}"
+          
+          REGION=$(echo "$REGION" | xargs)
+          PROJECT=$(echo "$PROJECT" | xargs)
+          
+          if [ -z "$REGION" ] || [ "$REGION" = "null" ] || [ "$REGION" = "" ]; then
+            REGION="${{ env.GCP_REGION }}"
+          fi
+          
+          if [ -z "$PROJECT" ] || [ "$PROJECT" = "null" ] || [ "$PROJECT" = "" ]; then
+            PROJECT="${{ env.GCP_PROJECT_ID }}"
+          fi
+          
+          # Check backend service
+          if gcloud run services describe $BACKEND_SERVICE --region=$REGION --format="value(metadata.name)" 2>/dev/null | grep -q "$BACKEND_SERVICE"; then
+            echo "✅ Backend service exists: $BACKEND_SERVICE"
+            BACKEND_URL=$(gcloud run services describe $BACKEND_SERVICE --region=$REGION --format="value(status.url)" 2>/dev/null)
+            if [ -n "$BACKEND_URL" ]; then
+              echo "   URL: $BACKEND_URL"
+            fi
+          else
+            echo "ℹ️  Backend service not found: $BACKEND_SERVICE (will be created on first deployment)"
+          fi
+          
+          # Check frontend service
+          if gcloud run services describe $FRONTEND_SERVICE --region=$REGION --format="value(metadata.name)" 2>/dev/null | grep -q "$FRONTEND_SERVICE"; then
+            echo "✅ Frontend service exists: $FRONTEND_SERVICE"
+            FRONTEND_URL=$(gcloud run services describe $FRONTEND_SERVICE --region=$REGION --format="value(status.url)" 2>/dev/null)
+            if [ -n "$FRONTEND_URL" ]; then
+              echo "   URL: $FRONTEND_URL"
+            fi
+          else
+            echo "ℹ️  Frontend service not found: $FRONTEND_SERVICE (will be created on first deployment)"
+          fi
+          
+          echo "=========================================="
+
+  validate-docker-builds:
+    name: Validate Docker Builds
+    runs-on: ubuntu-latest
+    needs: validate-secrets
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Validate Backend Dockerfile
+        run: |
+          echo "=========================================="
+          echo "🔍 Validating Backend Dockerfile"
+          echo "=========================================="
+          
+          if [ ! -f "./backend/Dockerfile" ]; then
+            echo "❌ Backend Dockerfile not found"
+            exit 1
+          fi
+          
+          echo "✅ Backend Dockerfile exists"
+          
+          # Check if Dockerfile is valid (basic syntax check)
+          if docker buildx build --dry-run -f ./backend/Dockerfile ./backend 2>&1 | grep -q "error"; then
+            echo "❌ Backend Dockerfile has syntax errors"
+            exit 1
+          fi
+          
+          echo "✅ Backend Dockerfile syntax is valid"
+          echo "=========================================="
+
+      - name: Validate Frontend Dockerfile
+        run: |
+          echo "=========================================="
+          echo "🔍 Validating Frontend Dockerfile"
+          echo "=========================================="
+          
+          if [ ! -f "./frontend/Dockerfile" ]; then
+            echo "❌ Frontend Dockerfile not found"
+            exit 1
+          fi
+          
+          echo "✅ Frontend Dockerfile exists"
+          
+          # Check if Dockerfile is valid (basic syntax check)
+          if docker buildx build --dry-run -f ./frontend/Dockerfile ./frontend 2>&1 | grep -q "error"; then
+            echo "❌ Frontend Dockerfile has syntax errors"
+            exit 1
+          fi
+          
+          echo "✅ Frontend Dockerfile syntax is valid"
+          echo "=========================================="
+
+      - name: Test Backend Docker Build (Dry Run)
+        run: |
+          echo "=========================================="
+          echo "🔍 Testing Backend Docker Build"
+          echo "=========================================="
+          
+          # Test build without pushing
+          docker buildx build \
+            --load \
+            --tag test-backend:latest \
+            -f ./backend/Dockerfile \
+            ./backend 2>&1 | head -20
+          
+          if [ $? -eq 0 ]; then
+            echo "✅ Backend Docker build test passed"
+          else
+            echo "❌ Backend Docker build test failed"
+            exit 1
+          fi
+          
+          echo "=========================================="
+
+      - name: Test Frontend Docker Build (Dry Run)
+        run: |
+          echo "=========================================="
+          echo "🔍 Testing Frontend Docker Build"
+          echo "=========================================="
+          
+          # Test build without pushing
+          docker buildx build \
+            --load \
+            --tag test-frontend:latest \
+            -f ./frontend/Dockerfile \
+            --build-arg NEXT_PUBLIC_API_BASE_URL=http://localhost:5001/api \
+            ./frontend 2>&1 | head -20
+          
+          if [ $? -eq 0 ]; then
+            echo "✅ Frontend Docker build test passed"
+          else
+            echo "❌ Frontend Docker build test failed"
+            exit 1
+          fi
+          
+          echo "=========================================="
+
+  validation-summary:
+    name: Validation Summary
+    runs-on: ubuntu-latest
+    needs: [validate-secrets, validate-gcp-connection, validate-docker-builds]
+    if: always()
+
+    steps:
+      - name: Generate Summary
+        run: |
+          echo "=========================================="
+          echo "📊 VALIDATION SUMMARY"
+          echo "=========================================="
+          echo ""
+          echo "✅ Secrets Validation: ${{ needs.validate-secrets.result }}"
+          echo "✅ GCP Connection: ${{ needs.validate-gcp-connection.result }}"
+          echo "✅ Docker Builds: ${{ needs.validate-docker-builds.result }}"
+          echo ""
+          
+          if [ "${{ needs.validate-secrets.result }}" = "success" ] && \
+             [ "${{ needs.validate-gcp-connection.result }}" = "success" ] && \
+             [ "${{ needs.validate-docker-builds.result }}" = "success" ]; then
+            echo "🎉 ALL VALIDATIONS PASSED!"
+            echo ""
+            echo "Your configuration is ready for deployment."
+            echo "You can now run the deploy-gcp.yml workflow."
+          else
+            echo "❌ SOME VALIDATIONS FAILED"
+            echo ""
+            echo "Please check the failed jobs above and fix the issues."
+            exit 1
+          fi
+          
+          echo "=========================================="
+

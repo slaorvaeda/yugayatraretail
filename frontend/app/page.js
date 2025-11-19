@@ -11,12 +11,23 @@ import ResourcesSection from './components/ResourcesSection';
 import CompanySection from './components/CompanySection';
 import ContactSection from './components/ContactSection';
 import ErrorBoundary from './components/ErrorBoundary';
+import Loader from './components/Loader';
 import { useState, useEffect, useRef } from 'react';
 
 export default function Home() {
   const [useFallback, setUseFallback] = useState(false);
+  const [loading, setLoading] = useState(true);
   const scrollbarRef = useRef(null);
   const [scrollProgress, setScrollProgress] = useState(0);
+
+  useEffect(() => {
+    // Initial page load
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     // Check if Three.js is available
@@ -50,6 +61,10 @@ export default function Home() {
 
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  if (loading) {
+    return <Loader fullScreen={true} message="Loading..." />;
+  }
 
   return (
     <ErrorBoundary>

@@ -29,7 +29,7 @@ export default function CompanySection() {
   const stats = [
     { number: '2K+', label: 'Learners Trained' },
     { number: '20+', label: 'Industry Partners' },
-    { number: '60%', label: 'Success Rate' },
+    { number: '100%', label: 'Success Rate' },
     { number: '10+', label: 'Certification Programs' }
   ];
 

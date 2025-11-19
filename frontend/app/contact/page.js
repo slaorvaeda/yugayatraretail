@@ -8,8 +8,11 @@ import ExpertTeamSection from '../components/ExpertTeamSection';
 import FAQSection from '../components/FAQSection';
 import ResourceLibrary from '../components/ResourceLibrary';
 import MembershipCTA from '../components/MembershipCTA';
+import Loader from '../components/Loader';
+import { usePageLoader } from '../components/usePageLoader';
 
 export default function ContactPage() {
+  const loading = usePageLoader(300);
   const scrollbarRef = useRef(null);
   const [scrollProgress, setScrollProgress] = useState(0);
 
@@ -33,6 +36,10 @@ export default function ContactPage() {
       window.removeEventListener('scroll', handleScroll);
     };
   }, []);
+
+  if (loading) {
+    return <Loader fullScreen={true} message="Loading..." />;
+  }
 
   return (
     <main className="bg-white min-h-screen relative">

@@ -5,6 +5,7 @@ import {
   routineEntrySchema,
   progressionSchema
 } from '../validators/adminValidators.js';
+import { isValidUUID } from '../middleware/security.js';
 
 export const getDashboardSummary = async (_req, res, next) => {
   try {
@@ -55,6 +56,23 @@ export const updateInternStatus = async (req, res, next) => {
     const payload = updateInternStatusSchema.parse(req.body);
     const internId = req.params.internId;
 
+    // Validate internId format
+    if (!isValidUUID(internId)) {
+      return res.status(400).json({ message: 'Invalid intern ID format' });
+    }
+
+    // Verify intern exists and is actually an intern
+    const { data: user, error: userError } = await supabase
+      .from('users')
+      .select('id, role')
+      .eq('id', internId)
+      .eq('role', 'intern')
+      .maybeSingle();
+
+    if (userError || !user) {
+      return res.status(404).json({ message: 'Intern not found' });
+    }
+
     const { data: profile, error: profileError } = await supabase
       .from('intern_profiles')
       .update({
@@ -93,6 +111,23 @@ export const addRoutineEntry = async (req, res, next) => {
     const payload = routineEntrySchema.parse(req.body);
     const internId = req.params.internId;
 
+    // Validate internId format
+    if (!isValidUUID(internId)) {
+      return res.status(400).json({ message: 'Invalid intern ID format' });
+    }
+
+    // Verify intern exists
+    const { data: user } = await supabase
+      .from('users')
+      .select('id')
+      .eq('id', internId)
+      .eq('role', 'intern')
+      .maybeSingle();
+
+    if (!user) {
+      return res.status(404).json({ message: 'Intern not found' });
+    }
+
     const { data, error } = await supabase
       .from('intern_routines')
       .insert({
@@ -128,6 +163,23 @@ export const addProgression = async (req, res, next) => {
   try {
     const payload = progressionSchema.parse(req.body);
     const internId = req.params.internId;
+
+    // Validate internId format
+    if (!isValidUUID(internId)) {
+      return res.status(400).json({ message: 'Invalid intern ID format' });
+    }
+
+    // Verify intern exists
+    const { data: user } = await supabase
+      .from('users')
+      .select('id')
+      .eq('id', internId)
+      .eq('role', 'intern')
+      .maybeSingle();
+
+    if (!user) {
+      return res.status(404).json({ message: 'Intern not found' });
+    }
 
     const { data, error } = await supabase
       .from('intern_progression')
