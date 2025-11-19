@@ -6,57 +6,57 @@ import { gsap } from 'gsap';
 const artCards = [
     {
       id: 1,
-      title: "TESLA",
-      colors: "bg-red-500",
-      content: "Nikola Tesla inspired artwork with red, black, white, and green tones",
+      title: "SKILL TRAINING",
+      image: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=800&q=80",
+      content: "Comprehensive skill development programs designed to enhance your professional capabilities",
       rotation: -15,
       zIndex: 1
     },
     {
       id: 2,
-      title: "Abstract Blue",
-      colors: "bg-blue-400",
-      content: "Abstract blue and white line art with stylized figures",
+      title: "CERTIFICATIONS",
+      image: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=800&q=80",
+      content: "Industry-recognized certifications that validate your expertise and boost career prospects",
       rotation: -10,
       zIndex: 2
     },
     {
       id: 3,
-      title: "Friends Pack",
-      colors: "bg-yellow-400",
-      content: "Bright yellow card with cartoon figures and 'Friends' branding",
+      title: "CAREER GUIDANCE",
+      image: "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=800&q=80",
+      content: "Expert mentorship and career counseling to help you navigate your professional journey",
       rotation: -5,
       zIndex: 3
     },
     {
       id: 4,
-      title: "Colorful Abstract",
-      colors: "bg-pink-400",
-      content: "Abstract colorful illustration with geometric shapes",
+      title: "PLACEMENT SUPPORT",
+      image: "https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=800&q=80",
+      content: "Direct connections with top employers and placement assistance for your dream job",
       rotation: 0,
       zIndex: 4
     },
     {
       id: 5,
-      title: "Portrait",
-      colors: "bg-red-600",
-      content: "Realistic painting with hand covering face and red stripes",
+      title: "WORKFORCE ACADEMY",
+      image: "https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&w=800&q=80",
+      content: "Structured workforce development programs tailored to industry requirements",
       rotation: 5,
       zIndex: 3
     },
     {
       id: 6,
-      title: "Independence",
-      colors: "bg-blue-600",
-      content: "Bold text with red poppy flowers and blue elements",
+      title: "DIGITAL LEARNING",
+      image: "https://images.unsplash.com/photo-1501504905252-473c47e087f8?auto=format&fit=crop&w=800&q=80",
+      content: "Modern digital learning platforms with interactive content and real-time progress tracking",
       rotation: 10,
       zIndex: 2
     },
     {
       id: 7,
-      title: "Green Portrait",
-      colors: "bg-green-500",
-      content: "Vibrant green card with stylized text and graphics",
+      title: "TALENT MARKETPLACE",
+      image: "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&w=800&q=80",
+      content: "Connect with opportunities and showcase your skills in our talent marketplace",
       rotation: 15,
       zIndex: 1
     }
@@ -117,9 +117,9 @@ const ArtGalleryHero = () => {
       <div className="lg:hidden w-full">
         <div className="text-center mb-8" data-aos="fade-up" data-aos-delay="100">
           <h1 className="text-3xl sm:text-4xl font-black text-gray-900 leading-tight mb-4">
-            <span>A place to display your</span>
+            <span>A place to showcase your</span>
             <br />
-            <span className="text-4xl sm:text-5xl">masterpiece.</span>
+            <span className="text-4xl sm:text-5xl">professional skills.</span>
           </h1>
         </div>
 
@@ -128,12 +128,31 @@ const ArtGalleryHero = () => {
           {artCards.slice(0, 4).map((card, index) => (
             <div
               key={card.id}
-              className={`${card.colors} rounded-xl p-4 shadow-lg h-48 flex flex-col items-center justify-center`}
+              className="rounded-xl p-4 shadow-lg h-48 flex flex-col items-center justify-center relative overflow-hidden transform transition-all duration-150 ease-out hover:-translate-y-2 hover:scale-105 hover:shadow-2xl"
             >
-              <div className="text-white font-bold text-sm mb-2 text-center">
+              {/* Blurred Background */}
+              <div
+                className="absolute inset-0 rounded-xl"
+                style={{
+                  backgroundImage: `url(${card.image})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  backgroundRepeat: 'no-repeat',
+                  filter: 'blur(2px)',
+                  transform: 'scale(1.05)'
+                }}
+              />
+              {/* Gradient Overlay */}
+              <div
+                className="absolute inset-0 rounded-xl"
+                style={{
+                  background: 'linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.6))'
+                }}
+              />
+              <div className="text-white font-bold text-sm mb-2 text-center relative z-10">
                 {card.title}
               </div>
-              <div className="text-white/80 text-xs text-center">
+              <div className="text-white/90 text-xs text-center relative z-10">
                 {card.content.split(' ').slice(0, 5).join(' ')}...
               </div>
             </div>
@@ -142,16 +161,16 @@ const ArtGalleryHero = () => {
 
         <div className="text-center mb-6" data-aos="fade-up" data-aos-delay="300">
           <p className="text-sm text-gray-700 leading-relaxed px-4">
-            Artists can display their masterpieces, and buyers can discover works that resonate.
+            Professionals can showcase their skills, and employers can discover talent that drives success.
           </p>
         </div>
 
         <div className="flex flex-col gap-3 px-4" data-aos="fade-up" data-aos-delay="400">
-          <button className="bg-black text-white px-6 py-3 rounded-xl font-medium text-base shadow-lg">
-            Join for free now
+          <button className="bg-blue-600 text-white px-6 py-3 rounded-xl font-medium text-base shadow-lg hover:bg-blue-700 transition-colors">
+            Start Your Journey
           </button>
-          <button className="bg-white text-gray-900 px-6 py-3 rounded-xl font-medium text-base border-2 border-gray-200 shadow-md">
-            Read more
+          <button className="bg-white text-gray-900 px-6 py-3 rounded-xl font-medium text-base border-2 border-gray-200 shadow-md hover:border-blue-300 transition-colors">
+            Explore Programs
           </button>
         </div>
       </div>
@@ -168,8 +187,8 @@ const ArtGalleryHero = () => {
           data-aos-delay="100"
         >
           <h1 className="text-7xl font-black text-gray-900 leading-tight">
-            <span data-aos="fade-up" data-aos-delay="200">A place to display your</span>{' '}
-            <span className="text-8xl" data-aos="fade-up" data-aos-delay="300">masterpiece.</span>
+            <span data-aos="fade-up" data-aos-delay="200">A place to showcase your</span>{' '}
+            <span className="text-8xl" data-aos="fade-up" data-aos-delay="300">professional skills.</span>
           </h1>
         </motion.div>
 
@@ -185,7 +204,7 @@ const ArtGalleryHero = () => {
           data-aos-delay="500"
         >
           <div className="bg-blue-500 text-white px-4 py-2 rounded-full text-sm font-medium shadow-lg">
-            @coplin
+            #SkillDevelopment
           </div>
         </motion.div>
         
@@ -198,7 +217,7 @@ const ArtGalleryHero = () => {
           data-aos-delay="600"
         >
           <div className="bg-green-500 text-white px-4 py-2 rounded-full text-sm font-medium shadow-lg">
-            @andrea
+            #CareerGrowth
           </div>
         </motion.div>
 
@@ -208,13 +227,7 @@ const ArtGalleryHero = () => {
             <div
               key={card.id}
               ref={el => cardsRef.current[index] = el}
-              className={`
-                absolute w-48 h-64 rounded-3xl shadow-2xl cursor-pointer
-                ${card.colors} 
-                flex flex-col items-center justify-center
-                transform transition-all duration-300
-                hover:shadow-3xl
-              `}
+              className="absolute w-48 h-64 rounded-3xl shadow-2xl cursor-pointer flex flex-col items-center justify-center transform transition-all duration-150 hover:shadow-3xl overflow-hidden"
               style={{
                 left: `${20 + (index * 8)}%`,
                 top: isMounted ? `${Math.sin(index * 0.5) * 20}px` : '0px',
@@ -224,31 +237,54 @@ const ArtGalleryHero = () => {
               data-aos-delay={`${800 + (index * 50)}`}
               onMouseEnter={() => {
                 if (!isMounted) return;
+                const currentY = gsap.getProperty(cardsRef.current[index], "y") || 0;
                 gsap.to(cardsRef.current[index], {
                   scale: 1.05,
                   rotation: card.rotation + 5,
-                  y: "-=15",
+                  y: currentY - 20,
                   zIndex: 10,
-                  duration: 0.3,
-                  ease: "power2.out"
+                  duration: 0.15,
+                  ease: "power1.out",
+                  immediateRender: false
                 });
               }}
               onMouseLeave={() => {
                 if (!isMounted) return;
+                const baseY = Math.sin(index * 0.5) * 20;
                 gsap.to(cardsRef.current[index], {
                   scale: 1,
                   rotation: card.rotation,
-                  y: "+=15",
+                  y: baseY,
                   zIndex: card.zIndex,
-                  duration: 0.3,
-                  ease: "power2.out"
+                  duration: 0.15,
+                  ease: "power1.out",
+                  immediateRender: false
                 });
               }}
             >
-              <div className="text-white font-bold text-lg mb-2 text-center px-4">
+              {/* Blurred Background */}
+              <div
+                className="absolute inset-0 rounded-3xl"
+                style={{
+                  backgroundImage: `url(${card.image})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  backgroundRepeat: 'no-repeat',
+                  filter: 'blur(2px)',
+                  transform: 'scale(1.05)'
+                }}
+              />
+              {/* Gradient Overlay */}
+              <div
+                className="absolute inset-0 rounded-3xl"
+                style={{
+                  background: 'linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.6))'
+                }}
+              />
+              <div className="text-white font-bold text-lg mb-2 text-center px-4 relative z-10 drop-shadow-lg">
                 {card.title}
               </div>
-              <div className="text-white/80 text-xs text-center px-4">
+              <div className="text-white/90 text-xs text-center px-4 relative z-10 drop-shadow-md">
                 {card.content}
               </div>
             </div>
@@ -266,7 +302,7 @@ const ArtGalleryHero = () => {
           data-aos-delay="1200"
         >
           <p className="text-xl text-gray-700 leading-relaxed">
-            Artists can display their masterpieces, and buyers can discover and purchase works that resonate with them.
+            Professionals can showcase their skills and achievements, while employers can discover talented individuals who drive innovation and success.
           </p>
         </motion.div>
 
@@ -282,21 +318,21 @@ const ArtGalleryHero = () => {
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="bg-black text-white px-8 py-4 rounded-2xl font-medium text-lg shadow-xl hover:shadow-2xl transition-all duration-300"
+            className="bg-blue-600 text-white px-8 py-4 rounded-2xl font-medium text-lg shadow-xl hover:shadow-2xl transition-all duration-300 hover:bg-blue-700"
             data-aos="zoom-in"
             data-aos-delay="1400"
           >
-            Join for free now
+            Start Your Journey
           </motion.button>
           
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="bg-white text-gray-900 px-8 py-4 rounded-2xl font-medium text-lg border-2 border-gray-200 hover:border-gray-300 shadow-lg hover:shadow-xl transition-all duration-300"
+            className="bg-white text-gray-900 px-8 py-4 rounded-2xl font-medium text-lg border-2 border-gray-200 hover:border-blue-300 shadow-lg hover:shadow-xl transition-all duration-300"
             data-aos="zoom-in"
             data-aos-delay="1500"
           >
-            Read more
+            Explore Programs
           </motion.button>
         </motion.div>
       </div>

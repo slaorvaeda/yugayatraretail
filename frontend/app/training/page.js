@@ -2,8 +2,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import TrainHero from '../components/TrainHero';
 import TrainingCards from '../components/MedicationCards';
+import Loader from '../components/Loader';
+import { usePageLoader } from '../components/usePageLoader';
 
 export default function TrainingPage() {
+  const loading = usePageLoader(300);
   const scrollbarRef = useRef(null);
   const [scrollProgress, setScrollProgress] = useState(0);
 
@@ -22,6 +25,10 @@ export default function TrainingPage() {
 
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  if (loading) {
+    return <Loader fullScreen={true} message="Loading..." />;
+  }
 
   return (
     <div className="min-h-screen relative overflow-hidden">

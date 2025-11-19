@@ -22,9 +22,10 @@ const formatUser = (user, profile) => ({
 
 export const register = async (req, res, next) => {
   try {
+    // Force role to 'intern' - admin accounts cannot be created via registration
     const payload = registerSchema.parse({
       ...req.body,
-      role: req.body.role || 'intern'
+      role: 'intern' // Always set to intern, ignore client-provided role
     });
 
     const { data: existingUser } = await supabase
@@ -34,7 +35,8 @@ export const register = async (req, res, next) => {
       .maybeSingle();
 
     if (existingUser) {
-      return res.status(409).json({ message: 'Email already registered' });
+      // Use generic message to prevent user enumeration
+      return res.status(400).json({ message: 'Registration failed. Please check your information and try again.' });
     }
 
     const passwordHash = await hashPassword(payload.password);
@@ -108,16 +110,20 @@ export const login = async (req, res, next) => {
     const { data: user, error } = await supabase
       .from('users')
       .select('id, role, full_name, email, phone, status, avatar_url, password_hash')
-      .eq('email', payload.email)
-      .single();
+      .eq('email', payload.email.toLowerCase().trim())
+      .maybeSingle();
 
-    if (error || !user) {
-      return res.status(401).json({ message: 'Invalid credentials' });
-    }
-
-    const isValid = await comparePassword(payload.password, user.password_hash);
-    if (!isValid) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+    // Always return same error message to prevent user enumeration
+    // Use a dummy hash comparison to prevent timing attacks
+    const dummyHash = '$2a$12$dummy.hash.to.prevent.timing.attacks.here';
+    const userHash = user?.password_hash || dummyHash;
+    
+    const isValid = await comparePassword(payload.password, userHash);
+    
+    if (!user || !isValid) {
+      // Add small random delay to prevent timing attacks
+      await new Promise(resolve => setTimeout(resolve, Math.random() * 100 + 50));
+      return res.status(401).json({ message: 'Invalid email or password' });
     }
 
     let profile;
