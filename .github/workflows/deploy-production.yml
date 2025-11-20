@@ -46,6 +46,7 @@ jobs:
       - name: Configure Docker for Artifact Registry
         run: |
           REGION="${{ env.GCP_REGION }}"
+          REGION=$(echo "$REGION" | tr -d '\r')
           if [ -z "$REGION" ] || [[ "$REGION" == *"{{"* ]]; then
             REGION="us-central1"
           fi
