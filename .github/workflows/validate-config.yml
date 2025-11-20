@@ -66,20 +66,27 @@ jobs:
             
             # Validate JSON format using jq
             JSON_ERROR=$(jq -e . /tmp/gcp_sa_key.json 2>&1)
-            if [ $? -eq 0 ]; then
+            JQ_EXIT_CODE=$?
+            if [ $JQ_EXIT_CODE -eq 0 ]; then
               echo "   ✅ Valid JSON format"
-              PROJECT_ID=$(jq -r '.project_id // empty' /tmp/gcp_sa_key.json)
-              CLIENT_EMAIL=$(jq -r '.client_email // empty' /tmp/gcp_sa_key.json)
-              if [ -n "$PROJECT_ID" ] && [ "$PROJECT_ID" != "null" ]; then
+              PROJECT_ID=$(jq -r '.project_id // empty' /tmp/gcp_sa_key.json 2>/dev/null)
+              CLIENT_EMAIL=$(jq -r '.client_email // empty' /tmp/gcp_sa_key.json 2>/dev/null)
+              if [ -n "$PROJECT_ID" ] && [ "$PROJECT_ID" != "null" ] && [ "$PROJECT_ID" != "empty" ]; then
                 echo "   📋 Project ID: $PROJECT_ID"
+              else
+                echo "   ⚠️  WARNING: Could not extract project_id from JSON"
               fi
-              if [ -n "$CLIENT_EMAIL" ] && [ "$CLIENT_EMAIL" != "null" ]; then
+              if [ -n "$CLIENT_EMAIL" ] && [ "$CLIENT_EMAIL" != "null" ] && [ "$CLIENT_EMAIL" != "empty" ]; then
                 echo "   📋 Client Email: $CLIENT_EMAIL"
+              else
+                echo "   ⚠️  WARNING: Could not extract client_email from JSON"
               fi
             else
               echo "   ❌ Invalid JSON format"
-              echo "   🔍 JSON Error: $(echo "$JSON_ERROR" | head -n 1)"
+              echo "   🔍 JSON Error details:"
+              echo "$JSON_ERROR" | head -n 5 | sed 's/^/      /'
               echo "   💡 Tip: Make sure GCP_SA_KEY contains complete JSON from github-actions-key.json"
+              echo "   💡 The JSON should start with '{' and end with '}'"
               ERRORS=$((ERRORS + 1))
             fi
             rm -f /tmp/gcp_sa_key.json
@@ -163,9 +170,15 @@ jobs:
           echo "errors=$ERRORS" >> $GITHUB_OUTPUT
           echo "warnings=$WARNINGS" >> $GITHUB_OUTPUT
           
+          echo ""
+          echo "=========================================="
           if [ $ERRORS -gt 0 ]; then
             echo "❌ Validation failed: $ERRORS required secret(s) missing or invalid"
+            echo "=========================================="
             exit 1
+          else
+            echo "✅ All required secrets are valid!"
+            echo "=========================================="
           fi
 
       - name: Validate Optional Secrets
