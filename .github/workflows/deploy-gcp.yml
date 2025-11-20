@@ -197,7 +197,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
-            NEXT_PUBLIC_API_BASE_URL=${{ secrets.NEXT_PUBLIC_API_BASE_URL || 'https://yugayatra-backend-xxxxx-uc.a.run.app/api' }}
+            NEXT_PUBLIC_API_BASE_URL=${{ secrets.NEXT_PUBLIC_API_BASE_URL || '' }}
 
   # Deploy Backend
   deploy-backend:
@@ -315,6 +315,11 @@ jobs:
           BACKEND_URL="${{ steps.deploy-backend.outputs.url }}"
           echo "🏥 Checking backend health..."
           
+          # Install curl if not available
+          if ! command -v curl &> /dev/null; then
+            sudo apt-get update && sudo apt-get install -y curl
+          fi
+          
           # Wait for service to be ready
           sleep 10
           
@@ -407,11 +412,33 @@ jobs:
           PROJECT="${{ steps.deploy-values.outputs.PROJECT }}"
           SERVICE="${{ env.BACKEND_SERVICE }}"
           
-          BACKEND_URL=$(gcloud run services describe $SERVICE \
-            --platform=managed \
-            --region=$REGION \
-            --format="value(status.url)" \
-            --project=$PROJECT)
+          # Wait a bit for service to be fully ready
+          sleep 5
+          
+          # Retry getting the URL a few times
+          for i in {1..3}; do
+            BACKEND_URL=$(gcloud run services describe $SERVICE \
+              --platform=managed \
+              --region=$REGION \
+              --format="value(status.url)" \
+              --project=$PROJECT 2>/dev/null)
+            
+            if [ -n "$BACKEND_URL" ]; then
+              break
+            fi
+            
+            if [ $i -lt 3 ]; then
+              echo "⏳ Attempt $i/3: Waiting for backend service URL..."
+              sleep 5
+            fi
+          done
+          
+          if [ -z "$BACKEND_URL" ]; then
+            echo "⚠️  Could not get backend URL, service may still be deploying"
+            echo "   This is normal on first deployment - will use placeholder"
+            # The deployment will still work, frontend will use runtime env var
+            BACKEND_URL=""
+          fi
           
           echo "url=$BACKEND_URL" >> $GITHUB_OUTPUT
           echo "Backend URL: $BACKEND_URL"
@@ -435,6 +462,17 @@ jobs:
           echo "  Port: $PORT"
           echo "  Backend URL: $BACKEND_URL"
           
+          # Build env vars - handle empty BACKEND_URL
+          if [ -n "$BACKEND_URL" ]; then
+            ENV_VARS="NODE_ENV=production,PORT=$PORT,NEXT_PUBLIC_API_BASE_URL=${BACKEND_URL}/api"
+          else
+            # If backend URL not available yet, use secret or empty (will be set at runtime)
+            ENV_VARS="NODE_ENV=production,PORT=$PORT"
+            if [ -n "${{ secrets.NEXT_PUBLIC_API_BASE_URL }}" ]; then
+              ENV_VARS="${ENV_VARS},NEXT_PUBLIC_API_BASE_URL=${{ secrets.NEXT_PUBLIC_API_BASE_URL }}"
+            fi
+          fi
+          
           gcloud run deploy $SERVICE \
             --image="$IMAGE" \
             --platform=managed \
@@ -447,7 +485,7 @@ jobs:
             --max-instances=10 \
             --timeout=300 \
             --project=$PROJECT \
-            --set-env-vars="NODE_ENV=production,PORT=$PORT,NEXT_PUBLIC_API_BASE_URL=${BACKEND_URL}/api" \
+            --set-env-vars="$ENV_VARS" \
             --quiet
           
           # Get service URL
@@ -482,6 +520,11 @@ jobs:
         run: |
           FRONTEND_URL="${{ steps.deploy-frontend.outputs.url }}"
           echo "🏥 Checking frontend health..."
+          
+          # Install curl if not available
+          if ! command -v curl &> /dev/null; then
+            sudo apt-get update && sudo apt-get install -y curl
+          fi
           
           # Wait for service to be ready
           sleep 10

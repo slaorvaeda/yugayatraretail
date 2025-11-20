@@ -126,28 +126,15 @@ const contentBoxes = [
 
 export default function ExactImagePage() {
   const pageRef = useRef(null);
-  const textBlocksRef = useRef([]);
 
   useEffect(() => {
     // Page entrance animation
-    gsap.fromTo(pageRef.current,
-      { opacity: 0 },
-      { opacity: 1, duration: 1.5, ease: "power3.out" }
-    );
-
-    // Floating animation for cards
-    textBlocksRef.current.forEach((card, index) => {
-      if (card) {
-        gsap.to(card, {
-          y: -10,
-          duration: 2 + (index * 0.2),
-          repeat: -1,
-          yoyo: true,
-          ease: "power1.inOut",
-          delay: 2.5 + (index * 0.1)
-        });
-      }
-    });
+    if (pageRef.current) {
+      gsap.fromTo(pageRef.current,
+        { opacity: 0 },
+        { opacity: 1, duration: 1.5, ease: "power3.out" }
+      );
+    }
   }, []);
 
   return (
@@ -165,12 +152,15 @@ export default function ExactImagePage() {
           {contentBoxes.map((box, index) => (
             <div
               key={box.id}
-              ref={el => textBlocksRef.current[index] = el}
-              className="group relative bg-white/10 backdrop-blur-xl rounded-2xl p-5 shadow-2xl border border-white/20 hover:border-white/30 hover:shadow-3xl transition-all duration-300 hover:-translate-y-2 overflow-hidden before:absolute before:inset-0 before:rounded-2xl before:bg-gradient-to-br before:from-white/10 before:to-transparent before:pointer-events-none flex flex-col min-h-[180px]"
+              className="group relative bg-white/10 backdrop-blur-xl rounded-2xl p-5 shadow-2xl border border-white/20 hover:border-white/30 hover:shadow-3xl transition-all duration-300 hover:-translate-y-2 overflow-hidden before:absolute before:inset-0 before:rounded-2xl before:bg-gradient-to-br before:from-white/10 before:to-transparent before:pointer-events-none flex flex-col min-h-[180px] will-change-transform"
               data-aos="fade-up"
               data-aos-duration="800"
               data-aos-delay={index * 100}
               data-aos-easing="ease-out"
+              style={{
+                animation: `floatCard ${3 + index * 0.3}s ease-in-out infinite`,
+                animationDelay: `${index * 0.2}s`
+              }}
             >
               {/* Gradient Background Glow */}
               <div className={`absolute inset-0 bg-gradient-to-br ${box.gradient} opacity-0 group-hover:opacity-20 transition-opacity duration-300 rounded-2xl`} />
@@ -214,25 +204,14 @@ export default function ExactImagePage() {
             {contentBoxes.map((box, index) => (
               <div
                 key={box.id}
-                ref={el => textBlocksRef.current[index] = el}
-                className="group relative bg-white/10 backdrop-blur-2xl rounded-3xl p-6 shadow-2xl border border-white/20 hover:border-white/30 hover:shadow-[0_8px_32px_0_rgba(255,255,255,0.2)] transition-all duration-500 hover:-translate-y-3 hover:scale-105 overflow-hidden cursor-pointer before:absolute before:inset-0 before:rounded-3xl before:bg-gradient-to-br before:from-white/10 before:via-white/5 before:to-transparent before:pointer-events-none before:opacity-0 before:group-hover:opacity-100 before:transition-opacity before:duration-500 flex flex-col min-h-[280px]"
+                className="group relative bg-white/10 backdrop-blur-2xl rounded-3xl p-6 shadow-2xl border border-white/20 hover:border-white/30 hover:shadow-[0_8px_32px_0_rgba(255,255,255,0.2)] transition-all duration-500 hover:-translate-y-3 hover:scale-105 overflow-hidden cursor-pointer before:absolute before:inset-0 before:rounded-3xl before:bg-gradient-to-br before:from-white/10 before:via-white/5 before:to-transparent before:pointer-events-none before:opacity-0 before:group-hover:opacity-100 before:transition-opacity before:duration-500 flex flex-col min-h-[280px] will-change-transform"
                 data-aos="fade-up"
                 data-aos-duration="800"
                 data-aos-delay={index * 150}
                 data-aos-easing="ease-out"
-                onMouseEnter={(e) => {
-                  gsap.to(e.currentTarget, {
-                    rotation: index % 2 === 0 ? 1 : -1,
-                    duration: 0.3,
-                    ease: "power2.out"
-                  });
-                }}
-                onMouseLeave={(e) => {
-                  gsap.to(e.currentTarget, {
-                    rotation: 0,
-                    duration: 0.3,
-                    ease: "power2.out"
-                  });
+                style={{
+                  animation: `floatCard ${3 + index * 0.3}s ease-in-out infinite`,
+                  animationDelay: `${index * 0.2}s`
                 }}
               >
                 {/* Animated Gradient Background */}

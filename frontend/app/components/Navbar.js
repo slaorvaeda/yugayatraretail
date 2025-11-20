@@ -208,7 +208,7 @@ export default function Navbar() {
         {/* Logo on the left */}
         <div className="mx-4 md:mx-10">
           <Link href="/" className="hover:scale-110 transition-transform duration-300">
-            <Image src="/logo.png" alt="Logo" width={200} height={70} className="w-32 md:w-[200px] h-auto" />
+            <Image src="/logo.png" alt="Logo" width={200} height={70} className="w-32 md:w-[200px] h-auto" style={{ width: "auto", height: "auto" }} />
           </Link>
         </div>
 
@@ -275,7 +275,7 @@ export default function Navbar() {
           }}
         >
           <Link 
-            href="#work"
+            href="/projects-work"
             className="text-white hover:text-gray-300 text-sm font-medium transition-colors duration-300 whitespace-nowrap"
           >
             Work
@@ -367,7 +367,7 @@ export default function Navbar() {
               {/* Mobile Menu Header */}
               <div className="flex items-center justify-between p-6 border-b border-gray-200">
                 <Link href="/" onClick={closeMobileMenu} className="hover:scale-110 transition-transform duration-300">
-                  <Image src="/logo.png" alt="Logo" width={150} height={50} />
+                  <Image src="/logo.png" alt="Logo" width={150} height={50} style={{ width: "auto", height: "auto" }} />
                 </Link>
                 <button
                   onClick={closeMobileMenu}
@@ -385,7 +385,7 @@ export default function Navbar() {
                 {/* Navigation Links */}
                 <div className="space-y-4">
                   <Link
-                    href="#work"
+                    href="/projects-work"
                     onClick={closeMobileMenu}
                     className="block text-gray-900 hover:text-blue-600 text-lg font-medium transition-colors duration-300 py-2"
                   >

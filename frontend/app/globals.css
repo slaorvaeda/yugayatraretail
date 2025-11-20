@@ -136,6 +136,20 @@ h3 {
 }
 
 /* Modal shine animation */
+@keyframes floatCard {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+/* Smooth floating card animation - pauses on hover */
+[style*="floatCard"]:hover {
+  animation-play-state: paused !important;
+}
+
 @keyframes shine {
   0% { background-position: -200% -200%; }
   50% { background-position: 200% 200%; }
