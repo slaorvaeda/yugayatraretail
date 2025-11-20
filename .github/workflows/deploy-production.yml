@@ -303,7 +303,7 @@ jobs:
             --max-instances=10 \
             --timeout=300 \
             --project=$PROJECT \
-            --set-env-vars="NODE_ENV=production,PORT=$PORT,NEXT_PUBLIC_API_BASE_URL=${BACKEND_URL}/api" \
+            --set-env-vars="NODE_ENV=production,NEXT_PUBLIC_API_BASE_URL=${BACKEND_URL}/api" \
             --quiet
           
           # Get service URL
