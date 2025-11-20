@@ -38,109 +38,87 @@ jobs:
       - name: Validate Required Secrets
         id: required-secrets
         run: |
+          set -eo pipefail
+
+          ERRORS=0
+          WARNINGS=0
+
           echo "=========================================="
           echo "🔍 Validating Required Secrets"
           echo "=========================================="
-          
-          ERRORS=0
-          WARNINGS=0
-          
-          # Check GCP_SA_KEY (Required) - Use file-based approach to handle multi-line JSON
-          if [ -z "${{ secrets.GCP_SA_KEY }}" ]; then
-            # Try fallback file if secret is not set
-            if [ -f "GCP_SA_KEY_TO_COPY.json" ]; then
-              echo "ℹ️  GCP_SA_KEY secret not set, using fallback file: GCP_SA_KEY_TO_COPY.json"
-              cp GCP_SA_KEY_TO_COPY.json /tmp/gcp_sa_key.json
-            else
-              echo "❌ GCP_SA_KEY: NOT SET (REQUIRED)"
-              echo "   💡 Tip: Set GCP_SA_KEY secret or add GCP_SA_KEY_TO_COPY.json file"
-              ERRORS=$((ERRORS + 1))
-            fi
+
+          GCP_KEY_FILE="/tmp/gcp_sa_key.json"
+          TMP_GCP_KEY="/tmp/gcp_sa_key.secret"
+
+          # Safely write the multi-line secret to a file without interpreting characters.
+          cat <<'EOF' > "$TMP_GCP_KEY"
+${{ secrets.GCP_SA_KEY }}
+EOF
+
+          if grep -q '[^[:space:]]' "$TMP_GCP_KEY"; then
+            mv "$TMP_GCP_KEY" "$GCP_KEY_FILE"
           else
-            # Write secret to temp file
-            echo "${{ secrets.GCP_SA_KEY }}" > /tmp/gcp_sa_key.json
+            rm -f "$TMP_GCP_KEY"
           fi
-          
-          if [ -f /tmp/gcp_sa_key.json ]; then
-            LENGTH=$(wc -c < /tmp/gcp_sa_key.json | tr -d ' ')
+
+          if [ ! -f "$GCP_KEY_FILE" ]; then
+            echo "❌ GCP_SA_KEY: NOT SET (REQUIRED)"
+            echo "   💡 Tip: Update the GCP_SA_KEY secret with the full JSON content of your service account key."
+            ERRORS=$((ERRORS + 1))
+          else
+            LENGTH=$(wc -c < "$GCP_KEY_FILE" | tr -d ' ')
             echo "✅ GCP_SA_KEY: SET (length: $LENGTH chars)"
-            
-            # Validate JSON format using jq
-            if jq -e . /tmp/gcp_sa_key.json > /dev/null 2>&1; then
+
+            JSON_ERROR=$(jq -e . "$GCP_KEY_FILE" 2>&1) || true
+            if jq -e . "$GCP_KEY_FILE" >/dev/null 2>&1; then
               echo "   ✅ Valid JSON format"
-              PROJECT_ID=$(jq -r '.project_id // empty' /tmp/gcp_sa_key.json 2>/dev/null)
-              CLIENT_EMAIL=$(jq -r '.client_email // empty' /tmp/gcp_sa_key.json 2>/dev/null)
-              if [ -n "$PROJECT_ID" ] && [ "$PROJECT_ID" != "null" ] && [ "$PROJECT_ID" != "empty" ]; then
-                echo "   📋 Project ID: $PROJECT_ID"
-              fi
-              if [ -n "$CLIENT_EMAIL" ] && [ "$CLIENT_EMAIL" != "null" ] && [ "$CLIENT_EMAIL" != "empty" ]; then
-                echo "   📋 Client Email: $CLIENT_EMAIL"
-              fi
+              PROJECT_ID=$(jq -r '.project_id // empty' "$GCP_KEY_FILE" 2>/dev/null)
+              CLIENT_EMAIL=$(jq -r '.client_email // empty' "$GCP_KEY_FILE" 2>/dev/null)
+              [ -n "$PROJECT_ID" ] && echo "   📋 Project ID: $PROJECT_ID"
+              [ -n "$CLIENT_EMAIL" ] && echo "   📋 Client Email: $CLIENT_EMAIL"
             else
               echo "   ❌ Invalid JSON format"
-              JSON_ERROR=$(jq -e . /tmp/gcp_sa_key.json 2>&1 | head -n 3)
               echo "   🔍 JSON Error:"
-              echo "$JSON_ERROR" | sed 's/^/      /'
-              echo "   💡 Tip: Make sure GCP_SA_KEY contains complete valid JSON"
+              echo "$JSON_ERROR" | head -n 3 | sed 's/^/      /'
               ERRORS=$((ERRORS + 1))
             fi
-            rm -f /tmp/gcp_sa_key.json
+
+            rm -f "$GCP_KEY_FILE"
           fi
-          
-          # Check SUPABASE_URL (Required)
-          if [ -z "${{ secrets.SUPABASE_URL }}" ]; then
-            echo "❌ SUPABASE_URL: NOT SET (REQUIRED)"
-            ERRORS=$((ERRORS + 1))
-          else
-            echo "✅ SUPABASE_URL: SET"
-            URL_PREVIEW=$(echo "${{ secrets.SUPABASE_URL }}" | cut -c1-50)
-            echo "   📋 Value: ${URL_PREVIEW}..."
-          fi
-          
-          # Check SUPABASE_SERVICE_ROLE_KEY (Required)
-          if [ -z "${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" ]; then
-            echo "❌ SUPABASE_SERVICE_ROLE_KEY: NOT SET (REQUIRED)"
-            ERRORS=$((ERRORS + 1))
-          else
-            LENGTH=$(echo -n "${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" | wc -c | tr -d ' ')
-            echo "✅ SUPABASE_SERVICE_ROLE_KEY: SET (length: $LENGTH chars)"
-          fi
-          
-          # Check JWT_SECRET (Required)
-          if [ -z "${{ secrets.JWT_SECRET }}" ]; then
-            echo "❌ JWT_SECRET: NOT SET (REQUIRED)"
-            ERRORS=$((ERRORS + 1))
-          else
-            LENGTH=$(echo -n "${{ secrets.JWT_SECRET }}" | wc -c | tr -d ' ')
-            echo "✅ JWT_SECRET: SET (length: $LENGTH chars)"
-            if [ "$LENGTH" -lt 32 ]; then
-              echo "   ⚠️  WARNING: JWT_SECRET should be at least 32 characters"
+
+          check_secret() {
+            local value="$1"
+            local label="$2"
+            local preview="$3"
+            local min_len="$4"
+
+            if [ -z "$value" ]; then
+              echo "❌ $label: NOT SET (REQUIRED)"
+              ERRORS=$((ERRORS + 1))
+              return
+            fi
+
+            local length=${#value}
+            echo "✅ $label: SET"
+            if [ "$preview" = "yes" ]; then
+              echo "   📋 Value: $(printf '%s' "$value" | cut -c1-50)..."
+            else
+              echo "   📏 Length: $length chars"
+            fi
+
+            if [ -n "$min_len" ] && [ "$length" -lt "$min_len" ]; then
+              echo "   ⚠️  WARNING: $label should be at least $min_len characters"
               WARNINGS=$((WARNINGS + 1))
             fi
-          fi
-          
-          # Check CLOUDINARY secrets (Required)
-          if [ -z "${{ secrets.CLOUDINARY_CLOUD_NAME }}" ]; then
-            echo "❌ CLOUDINARY_CLOUD_NAME: NOT SET (REQUIRED)"
-            ERRORS=$((ERRORS + 1))
-          else
-            echo "✅ CLOUDINARY_CLOUD_NAME: SET"
-          fi
-          
-          if [ -z "${{ secrets.CLOUDINARY_API_KEY }}" ]; then
-            echo "❌ CLOUDINARY_API_KEY: NOT SET (REQUIRED)"
-            ERRORS=$((ERRORS + 1))
-          else
-            echo "✅ CLOUDINARY_API_KEY: SET"
-          fi
-          
-          if [ -z "${{ secrets.CLOUDINARY_API_SECRET }}" ]; then
-            echo "❌ CLOUDINARY_API_SECRET: NOT SET (REQUIRED)"
-            ERRORS=$((ERRORS + 1))
-          else
-            echo "✅ CLOUDINARY_API_SECRET: SET"
-          fi
-          
+          }
+
+          check_secret "${{ secrets.SUPABASE_URL }}" "SUPABASE_URL" "yes"
+          check_secret "${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" "SUPABASE_SERVICE_ROLE_KEY"
+          check_secret "${{ secrets.JWT_SECRET }}" "JWT_SECRET" "" 32
+          check_secret "${{ secrets.CLOUDINARY_CLOUD_NAME }}" "CLOUDINARY_CLOUD_NAME"
+          check_secret "${{ secrets.CLOUDINARY_API_KEY }}" "CLOUDINARY_API_KEY"
+          check_secret "${{ secrets.CLOUDINARY_API_SECRET }}" "CLOUDINARY_API_SECRET"
+
           echo ""
           echo "=========================================="
           echo "📊 Required Secrets Summary"
@@ -148,10 +126,10 @@ jobs:
           echo "Errors: $ERRORS"
           echo "Warnings: $WARNINGS"
           echo "=========================================="
-          
-          echo "errors=$ERRORS" >> $GITHUB_OUTPUT
-          echo "warnings=$WARNINGS" >> $GITHUB_OUTPUT
-          
+
+          echo "errors=$ERRORS" >> "$GITHUB_OUTPUT"
+          echo "warnings=$WARNINGS" >> "$GITHUB_OUTPUT"
+
           if [ $ERRORS -gt 0 ]; then
             echo "❌ Validation failed: $ERRORS required secret(s) missing or invalid"
             exit 1
