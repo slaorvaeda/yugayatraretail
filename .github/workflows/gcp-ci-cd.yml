@@ -8,11 +8,11 @@ on:
 
 env:
   NODE_VERSION: 20
-  PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
-  REGION: ${{ vars.GCP_REGION }}
-  ARTIFACT_REPOSITORY: ${{ vars.GCP_ARTIFACT_REPOSITORY }}
-  BACKEND_SERVICE: ${{ vars.CLOUD_RUN_BACKEND_SERVICE }}
-  FRONTEND_SERVICE: ${{ vars.CLOUD_RUN_FRONTEND_SERVICE }}
+  PROJECT_ID: ${{ vars.GCP_PROJECT_ID || 'yugayatraretail' }}
+  REGION: ${{ vars.GCP_REGION || 'us-central1' }}
+  ARTIFACT_REPOSITORY: ${{ vars.GCP_ARTIFACT_REPOSITORY || 'yugayatraretail' }}
+  BACKEND_SERVICE: ${{ vars.CLOUD_RUN_BACKEND_SERVICE || 'yugayatra-backend' }}
+  FRONTEND_SERVICE: ${{ vars.CLOUD_RUN_FRONTEND_SERVICE || 'yugayatra-frontend' }}
   CLIENT_URLS: ${{ vars.CLIENT_URLS }}
   NEXT_PUBLIC_API_BASE_URL: ${{ vars.NEXT_PUBLIC_API_BASE_URL }}
 
