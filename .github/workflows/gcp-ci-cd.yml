@@ -105,7 +105,8 @@ jobs:
 
       - name: Configure Artifact Registry auth
         run: |
-          REGION="${{ env.REGION }}"
+          REGION_RAW="${{ env.REGION }}"
+          REGION=$(printf '%s' "$REGION_RAW" | tr -d '\r\n')
           if [ -z "$REGION" ] || [[ "$REGION" == *"{{"* ]]; then
             REGION="us-central1"
           fi
@@ -124,7 +125,8 @@ jobs:
 
       - name: Export image names
         run: |
-          REGION="${{ env.REGION }}"
+          REGION_RAW="${{ env.REGION }}"
+          REGION=$(printf '%s' "$REGION_RAW" | tr -d '\r\n')
           if [ -z "$REGION" ] || [[ "$REGION" == *"{{"* ]]; then
             REGION="us-central1"
           fi
