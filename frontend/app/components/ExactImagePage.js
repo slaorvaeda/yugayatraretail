@@ -130,10 +130,10 @@ export default function ExactImagePage() {
   useEffect(() => {
     // Page entrance animation
     if (pageRef.current) {
-      gsap.fromTo(pageRef.current,
-        { opacity: 0 },
-        { opacity: 1, duration: 1.5, ease: "power3.out" }
-      );
+    gsap.fromTo(pageRef.current,
+      { opacity: 0 },
+      { opacity: 1, duration: 1.5, ease: "power3.out" }
+    );
     }
   }, []);
 
@@ -150,10 +150,10 @@ export default function ExactImagePage() {
       <div className="lg:hidden relative z-10 px-4 py-8 pb-16 pt-24" data-aos="fade-up" data-aos-delay="100">
         <div className="max-w-7xl mx-auto space-y-4">
           {contentBoxes.map((box, index) => (
-            <div
+          <div 
               key={box.id}
               className="group relative bg-white/10 backdrop-blur-xl rounded-2xl p-5 shadow-2xl border border-white/20 hover:border-white/30 hover:shadow-3xl transition-all duration-300 hover:-translate-y-2 overflow-hidden before:absolute before:inset-0 before:rounded-2xl before:bg-gradient-to-br before:from-white/10 before:to-transparent before:pointer-events-none flex flex-col min-h-[180px] will-change-transform"
-              data-aos="fade-up"
+            data-aos="fade-up"
               data-aos-duration="800"
               data-aos-delay={index * 100}
               data-aos-easing="ease-out"
@@ -173,7 +173,7 @@ export default function ExactImagePage() {
                 {/* Title */}
                 <h3 className="text-base font-bold text-gray-800 mb-3 group-hover:text-blue-600 transition-colors drop-shadow-sm leading-tight">
                   {box.title}
-                </h3>
+            </h3>
                 
                 {/* Description */}
                 <p className="text-xs text-gray-700 leading-relaxed mb-4 flex-grow line-clamp-3 drop-shadow-sm min-h-[48px]">
@@ -189,9 +189,9 @@ export default function ExactImagePage() {
                     <div className="text-xs text-gray-600 leading-tight">{box.metricLabel}</div>
                   </div>
                   <div className={`w-2 h-2 rounded-full bg-gradient-to-r ${box.gradient} animate-pulse flex-shrink-0`} />
-                </div>
-              </div>
-            </div>
+          </div>
+          </div>
+          </div>
           ))}
         </div>
       </div>
@@ -231,7 +231,7 @@ export default function ExactImagePage() {
                   {/* Title */}
                   <h3 className="text-xl font-bold mb-3 text-gray-800 drop-shadow-sm group-hover:text-blue-600 transition-colors duration-300 leading-tight">
                     {box.title}
-                  </h3>
+            </h3>
                   
                   {/* Description */}
                   <p className="text-sm text-gray-700 leading-relaxed mb-4 flex-grow drop-shadow-sm min-h-[72px]">
@@ -248,14 +248,14 @@ export default function ExactImagePage() {
                     </div>
                     <div className={`w-3 h-3 rounded-full bg-gradient-to-r ${box.gradient} shadow-lg animate-pulse group-hover:animate-none group-hover:scale-150 transition-transform flex-shrink-0`} />
                   </div>
-                </div>
-                
+          </div>
+
                 {/* Corner Accent - Glass Effect */}
                 <div className={`absolute top-0 right-0 w-20 h-20 bg-gradient-to-br ${box.gradient} opacity-0 group-hover:opacity-20 rounded-bl-full transition-opacity duration-500 blur-sm`} />
                 
                 {/* Glass Edge Highlight */}
                 <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              </div>
+          </div>
             ))}
           </div>
         </div>
