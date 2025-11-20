@@ -63,7 +63,7 @@ export default function TestimonialsSection() {
             What Our Clients Say
           </h2>
           <p className="text-lg text-slate-600 max-w-3xl mx-auto leading-relaxed">
-            Don't just take our word for it - hear from our satisfied clients about their experience working with us
+            Don&rsquo;t just take our word for it &mdash; hear from our satisfied clients about their experience working with us
           </p>
         </div>
 
@@ -87,7 +87,7 @@ export default function TestimonialsSection() {
 
               {/* Testimonial Text */}
               <p className="text-slate-600 leading-relaxed mb-6 text-lg group-hover:text-gray-700 transition-colors duration-700 ease-in-out">
-                "{testimonial.text}"
+                &ldquo;{testimonial.text}&rdquo;
               </p>
 
               {/* Project Badge */}
