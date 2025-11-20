@@ -37,117 +37,127 @@ jobs:
 
       - name: Validate Required Secrets
         id: required-secrets
-        env:
-          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}
-          CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME }}
-          CLOUDINARY_API_KEY: ${{ secrets.CLOUDINARY_API_KEY }}
-          CLOUDINARY_API_SECRET: ${{ secrets.CLOUDINARY_API_SECRET }}
         run: |
-          python <<'PY'
-import json
-import os
-import sys
-from pathlib import Path
-from textwrap import shorten
-
-REPO_ROOT = Path(".")
-FALLBACK_GCP_KEY_FILE = REPO_ROOT / "GCP_SA_KEY_TO_COPY.json"
-
-errors = 0
-warnings = 0
-
-def get_secret(name, *, required=True, preview=False, min_length=None, fallback_file=None):
-    global errors, warnings
-    value = os.environ.get(name)
-
-    if (value is None or not value.strip()) and fallback_file:
-        fallback_path = REPO_ROOT / fallback_file
-        if fallback_path.exists():
-            value = fallback_path.read_text(encoding="utf-8").strip()
-            print(f"ℹ️  Using fallback file for {name}: {fallback_file}")
-
-    if value is None or not value.strip():
-        if required:
-            print(f"❌ {name}: NOT SET (REQUIRED)")
-            errors += 1
-        else:
-            print(f"⚠️  {name}: Not set (optional)")
-        return None
-
-    value = value.strip()
-    if preview:
-        print(f"✅ {name}: SET")
-        print(f"   📋 Value: {shorten(value, width=50, placeholder='...')}")
-    else:
-        length = len(value)
-        print(f"✅ {name}: SET (length: {length} chars)")
-        if min_length and length < min_length:
-            print(f"   ⚠️  WARNING: {name} should be at least {min_length} characters")
-            warnings += 1
-
-    return value
-
-print("==========================================")
-print("🔍 Validating Required Secrets")
-print("==========================================")
-
-# GCP_SA_KEY with fallback to repo file
-gcp_sa_key = get_secret(
-    "GCP_SA_KEY",
-    fallback_file="GCP_SA_KEY_TO_COPY.json",
-)
-
-if gcp_sa_key:
-    try:
-        parsed = json.loads(gcp_sa_key)
-    except json.JSONDecodeError as exc:
-        print("   ❌ Invalid JSON format")
-        print(f"   🔍 JSON Error: {exc}")
-        print("   💡 Tip: Copy the entire JSON from github-actions-key.json")
-        errors += 1
-    else:
-        project_id = parsed.get("project_id")
-        client_email = parsed.get("client_email")
-        print(f"   📋 Project ID: {project_id or '<missing>'}")
-        print(f"   📋 Client Email: {client_email or '<missing>'}")
-
-# SUPABASE_URL (preview)
-get_secret("SUPABASE_URL", preview=True)
-
-# SUPABASE_SERVICE_ROLE_KEY
-get_secret("SUPABASE_SERVICE_ROLE_KEY")
-
-# JWT_SECRET (min 32 chars)
-get_secret("JWT_SECRET", min_length=32)
-
-# CLOUDINARY secrets
-get_secret("CLOUDINARY_CLOUD_NAME")
-get_secret("CLOUDINARY_API_KEY")
-get_secret("CLOUDINARY_API_SECRET")
-
-print("")
-print("==========================================")
-print("📊 Required Secrets Summary")
-print("==========================================")
-print(f"Errors: {errors}")
-print(f"Warnings: {warnings}")
-print("==========================================")
-
-github_output = os.environ.get("GITHUB_OUTPUT")
-if github_output:
-    with open(github_output, "a", encoding="utf-8") as gh:
-        gh.write(f"errors={errors}\n")
-        gh.write(f"warnings={warnings}\n")
-
-if errors > 0:
-    print("❌ Validation failed: required secret(s) missing or invalid")
-    sys.exit(1)
-
-print("✅ All required secrets are valid!")
-PY
+          echo "=========================================="
+          echo "🔍 Validating Required Secrets"
+          echo "=========================================="
+          
+          ERRORS=0
+          WARNINGS=0
+          
+          # Check GCP_SA_KEY (Required) - Use file-based approach to handle multi-line JSON
+          if [ -z "${{ secrets.GCP_SA_KEY }}" ]; then
+            # Try fallback file if secret is not set
+            if [ -f "GCP_SA_KEY_TO_COPY.json" ]; then
+              echo "ℹ️  GCP_SA_KEY secret not set, using fallback file: GCP_SA_KEY_TO_COPY.json"
+              cp GCP_SA_KEY_TO_COPY.json /tmp/gcp_sa_key.json
+            else
+              echo "❌ GCP_SA_KEY: NOT SET (REQUIRED)"
+              echo "   💡 Tip: Set GCP_SA_KEY secret or add GCP_SA_KEY_TO_COPY.json file"
+              ERRORS=$((ERRORS + 1))
+            fi
+          else
+            # Write secret to temp file
+            echo "${{ secrets.GCP_SA_KEY }}" > /tmp/gcp_sa_key.json
+          fi
+          
+          if [ -f /tmp/gcp_sa_key.json ]; then
+            LENGTH=$(wc -c < /tmp/gcp_sa_key.json | tr -d ' ')
+            echo "✅ GCP_SA_KEY: SET (length: $LENGTH chars)"
+            
+            # Validate JSON format using jq
+            if jq -e . /tmp/gcp_sa_key.json > /dev/null 2>&1; then
+              echo "   ✅ Valid JSON format"
+              PROJECT_ID=$(jq -r '.project_id // empty' /tmp/gcp_sa_key.json 2>/dev/null)
+              CLIENT_EMAIL=$(jq -r '.client_email // empty' /tmp/gcp_sa_key.json 2>/dev/null)
+              if [ -n "$PROJECT_ID" ] && [ "$PROJECT_ID" != "null" ] && [ "$PROJECT_ID" != "empty" ]; then
+                echo "   📋 Project ID: $PROJECT_ID"
+              fi
+              if [ -n "$CLIENT_EMAIL" ] && [ "$CLIENT_EMAIL" != "null" ] && [ "$CLIENT_EMAIL" != "empty" ]; then
+                echo "   📋 Client Email: $CLIENT_EMAIL"
+              fi
+            else
+              echo "   ❌ Invalid JSON format"
+              JSON_ERROR=$(jq -e . /tmp/gcp_sa_key.json 2>&1 | head -n 3)
+              echo "   🔍 JSON Error:"
+              echo "$JSON_ERROR" | sed 's/^/      /'
+              echo "   💡 Tip: Make sure GCP_SA_KEY contains complete valid JSON"
+              ERRORS=$((ERRORS + 1))
+            fi
+            rm -f /tmp/gcp_sa_key.json
+          fi
+          
+          # Check SUPABASE_URL (Required)
+          if [ -z "${{ secrets.SUPABASE_URL }}" ]; then
+            echo "❌ SUPABASE_URL: NOT SET (REQUIRED)"
+            ERRORS=$((ERRORS + 1))
+          else
+            echo "✅ SUPABASE_URL: SET"
+            URL_PREVIEW=$(echo "${{ secrets.SUPABASE_URL }}" | cut -c1-50)
+            echo "   📋 Value: ${URL_PREVIEW}..."
+          fi
+          
+          # Check SUPABASE_SERVICE_ROLE_KEY (Required)
+          if [ -z "${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" ]; then
+            echo "❌ SUPABASE_SERVICE_ROLE_KEY: NOT SET (REQUIRED)"
+            ERRORS=$((ERRORS + 1))
+          else
+            LENGTH=$(echo -n "${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" | wc -c | tr -d ' ')
+            echo "✅ SUPABASE_SERVICE_ROLE_KEY: SET (length: $LENGTH chars)"
+          fi
+          
+          # Check JWT_SECRET (Required)
+          if [ -z "${{ secrets.JWT_SECRET }}" ]; then
+            echo "❌ JWT_SECRET: NOT SET (REQUIRED)"
+            ERRORS=$((ERRORS + 1))
+          else
+            LENGTH=$(echo -n "${{ secrets.JWT_SECRET }}" | wc -c | tr -d ' ')
+            echo "✅ JWT_SECRET: SET (length: $LENGTH chars)"
+            if [ "$LENGTH" -lt 32 ]; then
+              echo "   ⚠️  WARNING: JWT_SECRET should be at least 32 characters"
+              WARNINGS=$((WARNINGS + 1))
+            fi
+          fi
+          
+          # Check CLOUDINARY secrets (Required)
+          if [ -z "${{ secrets.CLOUDINARY_CLOUD_NAME }}" ]; then
+            echo "❌ CLOUDINARY_CLOUD_NAME: NOT SET (REQUIRED)"
+            ERRORS=$((ERRORS + 1))
+          else
+            echo "✅ CLOUDINARY_CLOUD_NAME: SET"
+          fi
+          
+          if [ -z "${{ secrets.CLOUDINARY_API_KEY }}" ]; then
+            echo "❌ CLOUDINARY_API_KEY: NOT SET (REQUIRED)"
+            ERRORS=$((ERRORS + 1))
+          else
+            echo "✅ CLOUDINARY_API_KEY: SET"
+          fi
+          
+          if [ -z "${{ secrets.CLOUDINARY_API_SECRET }}" ]; then
+            echo "❌ CLOUDINARY_API_SECRET: NOT SET (REQUIRED)"
+            ERRORS=$((ERRORS + 1))
+          else
+            echo "✅ CLOUDINARY_API_SECRET: SET"
+          fi
+          
+          echo ""
+          echo "=========================================="
+          echo "📊 Required Secrets Summary"
+          echo "=========================================="
+          echo "Errors: $ERRORS"
+          echo "Warnings: $WARNINGS"
+          echo "=========================================="
+          
+          echo "errors=$ERRORS" >> $GITHUB_OUTPUT
+          echo "warnings=$WARNINGS" >> $GITHUB_OUTPUT
+          
+          if [ $ERRORS -gt 0 ]; then
+            echo "❌ Validation failed: $ERRORS required secret(s) missing or invalid"
+            exit 1
+          else
+            echo "✅ All required secrets are valid!"
+          fi
 
       - name: Validate Optional Secrets
         id: optional-secrets

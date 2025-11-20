@@ -53,3 +53,9 @@ cache/
 *.tsbuildinfo
 next-env.d.ts
 
+# GCP Service Account Keys (sensitive - should not be committed)
+GCP_SA_KEY_TO_COPY.json
+*-key.json
+*.json.key
+github-actions-key.json
+
