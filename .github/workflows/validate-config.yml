@@ -46,35 +46,39 @@ jobs:
           WARNINGS=0
           
           # Check GCP_SA_KEY (Required) - Write to temp file to avoid shell interpretation
-          GCP_SA_KEY_VALUE="${{ secrets.GCP_SA_KEY }}"
-          if [ -z "$GCP_SA_KEY_VALUE" ]; then
+          if [ -z "${{ secrets.GCP_SA_KEY }}" ]; then
             echo "❌ GCP_SA_KEY: NOT SET (REQUIRED)"
             ERRORS=$((ERRORS + 1))
           else
-            # Write to temp file using cat with heredoc to preserve exact content
-            cat > /tmp/gcp_sa_key.json <<'EOF'
-${{ secrets.GCP_SA_KEY }}
-EOF
+            # Write secret to temp file - GitHub Actions will handle the secret substitution
+            echo "${{ secrets.GCP_SA_KEY }}" > /tmp/gcp_sa_key.json
             LENGTH=$(wc -c < /tmp/gcp_sa_key.json | tr -d ' ')
             echo "✅ GCP_SA_KEY: SET (length: $LENGTH chars)"
             
-            # Validate JSON format - try to parse and show error if invalid
-            if jq -e . /tmp/gcp_sa_key.json > /dev/null 2>&1; then
+            # Check if file starts with { and ends with } (basic JSON check)
+            FIRST_CHAR=$(head -c 1 /tmp/gcp_sa_key.json)
+            LAST_CHAR=$(tail -c 1 /tmp/gcp_sa_key.json)
+            
+            if [ "$FIRST_CHAR" != "{" ]; then
+              echo "   ⚠️  WARNING: JSON doesn't start with '{' - may have extra whitespace"
+            fi
+            
+            # Validate JSON format using jq
+            JSON_ERROR=$(jq -e . /tmp/gcp_sa_key.json 2>&1)
+            if [ $? -eq 0 ]; then
               echo "   ✅ Valid JSON format"
               PROJECT_ID=$(jq -r '.project_id // empty' /tmp/gcp_sa_key.json)
               CLIENT_EMAIL=$(jq -r '.client_email // empty' /tmp/gcp_sa_key.json)
-              if [ -n "$PROJECT_ID" ]; then
+              if [ -n "$PROJECT_ID" ] && [ "$PROJECT_ID" != "null" ]; then
                 echo "   📋 Project ID: $PROJECT_ID"
               fi
-              if [ -n "$CLIENT_EMAIL" ]; then
+              if [ -n "$CLIENT_EMAIL" ] && [ "$CLIENT_EMAIL" != "null" ]; then
                 echo "   📋 Client Email: $CLIENT_EMAIL"
               fi
             else
               echo "   ❌ Invalid JSON format"
-              echo "   🔍 Checking JSON structure..."
-              # Show first few lines to help debug
-              head -n 3 /tmp/gcp_sa_key.json | sed 's/./*/g' | head -c 50
-              echo ""
+              echo "   🔍 JSON Error: $(echo "$JSON_ERROR" | head -n 1)"
+              echo "   💡 Tip: Make sure GCP_SA_KEY contains complete JSON from github-actions-key.json"
               ERRORS=$((ERRORS + 1))
             fi
             rm -f /tmp/gcp_sa_key.json
