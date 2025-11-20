@@ -3,7 +3,7 @@ import React from 'react';
 
 export default function ContactsUs() {
   return (
-    <section className="bg-white px-2 sm:px-4 w-full" style={{ minHeight: 'auto', height: 'auto' }} className="lg:h-[90vh] lg:min-h-[90vh] lg:max-h-[90vh]">
+    <section className="bg-white px-2 sm:px-4 w-full lg:h-[90vh] lg:min-h-[90vh] lg:max-h-[90vh]" style={{ minHeight: 'auto', height: 'auto' }}>
       <style jsx>{`
         @keyframes rotateText {
           from {

@@ -79,7 +79,8 @@ const ArtGalleryHero = () => {
 
   // Intersection Observer to detect when section is visible
   useEffect(() => {
-    if (!sectionRef.current) return;
+    const currentSection = sectionRef.current;
+    if (!currentSection) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -95,11 +96,11 @@ const ArtGalleryHero = () => {
       }
     );
 
-    observer.observe(sectionRef.current);
+    observer.observe(currentSection);
 
     return () => {
-      if (sectionRef.current) {
-        observer.unobserve(sectionRef.current);
+      if (currentSection) {
+        observer.unobserve(currentSection);
       }
     };
   }, [isVisible]);
