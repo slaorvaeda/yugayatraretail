@@ -105,7 +105,13 @@ jobs:
 
       - name: Configure Artifact Registry auth
         run: |
-          gcloud auth configure-docker "${{ env.REGION }}-docker.pkg.dev" --quiet
+          REGION="${{ env.REGION }}"
+          if [ -z "$REGION" ] || [[ "$REGION" == *"{{"* ]]; then
+            REGION="us-central1"
+          fi
+          HOST="${REGION}-docker.pkg.dev"
+          echo "Configuring Docker for: $HOST"
+          gcloud auth configure-docker "$HOST" --quiet
 
       - name: Ensure Artifact Registry repository
         run: |
@@ -118,10 +124,14 @@ jobs:
 
       - name: Export image names
         run: |
-          host="${{ env.REGION }}-docker.pkg.dev"
-          echo "REGISTRY_HOST=$host" >> "$GITHUB_ENV"
-          echo "BACKEND_IMAGE=$host/${{ env.PROJECT_ID }}/${{ env.ARTIFACT_REPOSITORY }}/backend:${{ env.IMAGE_TAG }}" >> "$GITHUB_ENV"
-          echo "FRONTEND_IMAGE=$host/${{ env.PROJECT_ID }}/${{ env.ARTIFACT_REPOSITORY }}/frontend:${{ env.IMAGE_TAG }}" >> "$GITHUB_ENV"
+          REGION="${{ env.REGION }}"
+          if [ -z "$REGION" ] || [[ "$REGION" == *"{{"* ]]; then
+            REGION="us-central1"
+          fi
+          HOST="${REGION}-docker.pkg.dev"
+          echo "REGISTRY_HOST=$HOST" >> "$GITHUB_ENV"
+          echo "BACKEND_IMAGE=$HOST/${{ env.PROJECT_ID }}/${{ env.ARTIFACT_REPOSITORY }}/backend:${{ env.IMAGE_TAG }}" >> "$GITHUB_ENV"
+          echo "FRONTEND_IMAGE=$HOST/${{ env.PROJECT_ID }}/${{ env.ARTIFACT_REPOSITORY }}/frontend:${{ env.IMAGE_TAG }}" >> "$GITHUB_ENV"
 
       - name: Build & push backend image
         run: |
@@ -152,7 +162,6 @@ jobs:
           from pathlib import Path
 
           required = {
-              "PORT": "5001",
               "NODE_ENV": "production",
               "CLIENT_URL": os.environ.get("CLIENT_URLS"),
               "SUPABASE_URL": os.environ.get("SUPABASE_URL"),
@@ -191,7 +200,6 @@ jobs:
           from pathlib import Path
 
           required = {
-              "PORT": "3000",
               "NODE_ENV": "production",
               "NEXT_PUBLIC_API_BASE_URL": os.environ.get("NEXT_PUBLIC_API_BASE_URL"),
           }
