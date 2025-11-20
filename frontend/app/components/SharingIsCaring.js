@@ -4,9 +4,9 @@ import Image from 'next/image';
 
 export default function SharingIsCaring() {
   return (
-    <section className="py-24 px-4 md:px-8 lg:px-16" style={{ backgroundColor: '#F8F8F8' }}>
-      <div className="max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+    <section className="py-12 sm:py-16 md:py-20 lg:py-24 px-4 md:px-8 lg:px-16 overflow-x-hidden" style={{ backgroundColor: '#F8F8F8' }}>
+      <div className="max-w-7xl mx-auto w-full">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 sm:gap-16 md:gap-20 items-center">
           {/* Left: Images */}
           <div className="relative" data-aos="fade-right">
             {/* Decorative circle */}
@@ -28,7 +28,7 @@ export default function SharingIsCaring() {
               </div>
               
               {/* Bottom image - Career Guidance */}
-              <div className="rounded-3xl md:rounded-[40px] overflow-hidden shadow-2xl ml-0 md:-ml-12" data-aos="zoom-in" data-aos-delay="400">
+              <div className="rounded-3xl md:rounded-[40px] overflow-hidden shadow-2xl ml-0 lg:-ml-12" data-aos="zoom-in" data-aos-delay="400">
                 <div className="relative w-full h-[250px] sm:h-[300px] md:h-[350px] lg:h-[400px] bg-gradient-to-br from-blue-100 via-blue-200 to-blue-300">
                   <Image
                     src="https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=800&q=80"

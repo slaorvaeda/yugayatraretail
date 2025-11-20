@@ -4,9 +4,9 @@ import Image from 'next/image';
 
 export default function SecretOfLiving() {
   return (
-    <section className="py-24 px-4 md:px-8 lg:px-16" style={{ backgroundColor: '#F8F8F8' }}>
-      <div className="max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+    <section className="py-12 sm:py-16 md:py-20 lg:py-24 px-4 md:px-8 lg:px-16 overflow-x-hidden" style={{ backgroundColor: '#F8F8F8' }}>
+      <div className="max-w-7xl mx-auto w-full">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12 items-center">
           {/* Left: Content */}
           <div className="order-2 lg:order-1">
             <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-blue-900 mb-6 md:mb-8 lg:mb-10 text-center lg:text-left" data-aos="fade-up">

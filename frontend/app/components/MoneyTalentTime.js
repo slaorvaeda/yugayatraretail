@@ -4,9 +4,9 @@ import Image from 'next/image';
 
 export default function MoneyTalentTime() {
   return (
-    <section className="py-24 px-4 md:px-8 lg:px-16" style={{ backgroundColor: '#F8F8F8' }}>
-      <div className="max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+    <section className="py-12 sm:py-16 md:py-20 lg:py-24 px-4 md:px-8 lg:px-16 overflow-x-hidden" style={{ backgroundColor: '#F8F8F8' }}>
+      <div className="max-w-7xl mx-auto w-full">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 sm:gap-16 md:gap-20 items-center">
           {/* Left: Large Text */}
           <div className="relative order-2 lg:order-1" data-aos="fade-right">
             <div className="text-[60px] sm:text-[80px] md:text-[120px] lg:text-[140px] xl:text-[180px] font-bold text-blue-200 leading-[0.9] opacity-40 text-center lg:text-left" data-aos="fade-up" data-aos-delay="100">

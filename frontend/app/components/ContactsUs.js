@@ -3,7 +3,7 @@ import React from 'react';
 
 export default function ContactsUs() {
   return (
-    <section className="bg-white px-2 sm:px-4 w-full lg:h-[90vh] lg:min-h-[90vh] lg:max-h-[90vh]" style={{ minHeight: 'auto', height: 'auto' }}>
+    <section className="bg-white px-2 sm:px-4 lg:px-8 w-full max-w-full overflow-x-hidden lg:h-[90vh] lg:min-h-[90vh] lg:max-h-[90vh]" style={{ minHeight: 'auto', height: 'auto' }}>
       <style jsx>{`
         @keyframes rotateText {
           from {
@@ -79,66 +79,66 @@ export default function ContactsUs() {
           transition: transform 0.3s ease;
         }
       `}</style>
-      <div className="w-full h-full flex flex-col">
+      <div className="w-full h-full flex flex-col max-w-full overflow-x-hidden lg:h-full">
     
 
         {/* Middle Section - Social Media & Consultation */}
-        <div className="relative flex-grow mb-4 md:mb-8 py-8 lg:py-0 lg:min-h-0" style={{ minHeight: '400px' }} data-aos="fade-up">
+        <div className="relative flex-grow mb-4 md:mb-8 py-8 lg:py-0 overflow-x-hidden lg:h-[calc(90vh-120px)] lg:min-h-[calc(90vh-120px)]" style={{ minHeight: '400px', maxWidth: '100%', height: 'auto' }} data-aos="fade-up">
           {/* Social Media Pills */}
-          <div className="relative w-full h-full min-h-[400px] lg:min-h-0">
+          <div className="relative w-full h-full min-h-[400px] max-w-full overflow-x-hidden lg:h-full">
             {/* VIMEO - Top Left */}
-            <div className="absolute bottom-4 left-2 sm:left-4 md:left-12 z-30" data-aos="fade-right" data-aos-delay="100">
-              <div className="px-2 py-1 sm:px-4 sm:py-2 md:px-8 md:py-4 rounded-full border border-black sm:border-2 border-black bg-white text-black font-black text-[10px] xs:text-xs sm:text-sm md:text-base whitespace-nowrap">
+            <div className="absolute bottom-4 lg:bottom-8 left-2 sm:left-4 md:left-8 lg:left-12 z-30" data-aos="fade-right" data-aos-delay="100">
+              <div className="px-2 py-1 sm:px-4 sm:py-2 md:px-8 md:py-4 lg:px-10 lg:py-5 rounded-full border border-black sm:border-2 border-black bg-white text-black font-black text-[10px] xs:text-xs sm:text-sm md:text-base lg:text-lg whitespace-nowrap">
                 freshin10
               </div>
             </div>
 
             {/* FACEBOOK - Top Center, Angled */}
-            <div className="absolute bottom-8 left-1/3 sm:left-1/3 transform rotate-6 z-30 pointer-events-auto" data-aos="fade-up" data-aos-delay="200">
-              <div className="px-2 py-1 sm:px-4 sm:py-2 md:px-8 md:py-4 rounded-full bg-black text-white font-black text-[10px] xs:text-xs sm:text-sm md:text-base whitespace-nowrap shadow-lg">
+            <div className="absolute bottom-8 lg:bottom-12 left-1/3 sm:left-1/3 lg:left-1/2 lg:-translate-x-1/2 transform rotate-6 z-30 pointer-events-auto" data-aos="fade-up" data-aos-delay="200">
+              <div className="px-2 py-1 sm:px-4 sm:py-2 md:px-8 md:py-4 lg:px-10 lg:py-5 rounded-full bg-black text-white font-black text-[10px] xs:text-xs sm:text-sm md:text-base lg:text-lg whitespace-nowrap shadow-lg">
                 FACEBOOK
               </div>
             </div>
 
             {/* LINKEDIN - Top Right, Angled */}
-            <div className="absolute top-12 right-2 sm:right-4 md:right-12 transform -rotate-6 z-30" data-aos="fade-left" data-aos-delay="300">
-              <div className="px-2 py-1 sm:px-4 sm:py-2 md:px-8 md:py-4 rounded-full bg-black text-white font-black text-[10px] xs:text-xs sm:text-sm md:text-base whitespace-nowrap">
+            <div className="absolute top-12 lg:top-16 right-2 sm:right-4 md:right-8 lg:right-12 transform -rotate-6 z-30" data-aos="fade-left" data-aos-delay="300">
+              <div className="px-2 py-1 sm:px-4 sm:py-2 md:px-8 md:py-4 lg:px-10 lg:py-5 rounded-full bg-black text-white font-black text-[10px] xs:text-xs sm:text-sm md:text-base lg:text-lg whitespace-nowrap">
                 LINKEDIN
               </div>
             </div>
 
             {/* INSTAGRAM - Middle Left */}
-            <div className="absolute top-32 sm:top-40 left-1/4 sm:left-1/3 z-30" data-aos="fade-right" data-aos-delay="400">
-              <div className="px-2 py-1 sm:px-4 sm:py-2 md:px-8 md:py-4 rounded-full border border-black sm:border-2 border-black bg-white text-black font-black text-[10px] xs:text-xs sm:text-sm md:text-base whitespace-nowrap">
+            <div className="absolute top-32 sm:top-40 lg:top-1/3 left-1/4 sm:left-1/3 lg:left-16 z-30" data-aos="fade-right" data-aos-delay="400">
+              <div className="px-2 py-1 sm:px-4 sm:py-2 md:px-8 md:py-4 lg:px-10 lg:py-5 rounded-full border border-black sm:border-2 border-black bg-white text-black font-black text-[10px] xs:text-xs sm:text-sm md:text-base lg:text-lg whitespace-nowrap">
                 INSTAGRAM
               </div>
             </div>
 
             {/* TWITTER - Middle */}
-            <div className="absolute top-40 sm:top-48 left-1/2 transform -translate-x-1/2 z-30" data-aos="fade-up" data-aos-delay="500">
-              <div className="px-2 py-1 sm:px-4 sm:py-2 md:px-8 md:py-4 rounded-full border border-black sm:border-2 border-black bg-white text-black font-black text-[10px] xs:text-xs sm:text-sm md:text-base whitespace-nowrap">
+            <div className="absolute top-40 sm:top-48 lg:top-1/3 left-1/2 transform -translate-x-1/2 z-30" data-aos="fade-up" data-aos-delay="500">
+              <div className="px-2 py-1 sm:px-4 sm:py-2 md:px-8 md:py-4 lg:px-10 lg:py-5 rounded-full border border-black sm:border-2 border-black bg-white text-black font-black text-[10px] xs:text-xs sm:text-sm md:text-base lg:text-lg whitespace-nowrap">
                 TWITTER
               </div>
             </div>
 
             {/* PINTEREST - Lower Right */}
-            <div className="absolute top-64 sm:top-80 right-2 sm:right-4 md:right-56 z-30" data-aos="fade-left" data-aos-delay="600">
-              <div className="px-2 py-1 sm:px-4 sm:py-2 md:px-8 md:py-4 rounded-full border border-black sm:border-2 border-black bg-white text-black font-black text-[10px] xs:text-xs sm:text-sm md:text-base whitespace-nowrap shadow-lg">
+            <div className="absolute top-64 sm:top-80 lg:top-2/3 right-2 sm:right-4 md:right-12 lg:right-56 z-30" data-aos="fade-left" data-aos-delay="600">
+              <div className="px-2 py-1 sm:px-4 sm:py-2 md:px-8 md:py-4 lg:px-10 lg:py-5 rounded-full border border-black sm:border-2 border-black bg-white text-black font-black text-[10px] xs:text-xs sm:text-sm md:text-base lg:text-lg whitespace-nowrap shadow-lg">
                 PINTEREST
               </div>
             </div>
 
             {/* YOUTUBE - Lower Left */}
-            <div className="absolute top-56 sm:top-72 left-2 sm:left-4 md:left-76 z-30 pointer-events-auto" data-aos="fade-right" data-aos-delay="700">
-              <div className="px-2 py-1 sm:px-4 sm:py-2 md:px-8 md:py-4 rounded-full border border-black sm:border-2 border-black bg-white text-black font-black text-[10px] xs:text-xs sm:text-sm md:text-base whitespace-nowrap shadow-lg">
+            <div className="absolute top-56 sm:top-72 lg:top-2/3 left-2 sm:left-4 md:left-12 lg:left-76 z-30 pointer-events-auto" data-aos="fade-right" data-aos-delay="700">
+              <div className="px-2 py-1 sm:px-4 sm:py-2 md:px-8 md:py-4 lg:px-10 lg:py-5 rounded-full border border-black sm:border-2 border-black bg-white text-black font-black text-[10px] xs:text-xs sm:text-sm md:text-base lg:text-lg whitespace-nowrap shadow-lg">
                 YOUTUBE
               </div>
             </div>
 
             {/* Consultation Circles - Various Sizes */}
             {/* Large Circle 1 - Black, Left */}
-            <div className="absolute top-36 sm:top-48 left-0 sm:left-2 md:left-8 z-20 float-animation hover-scale cursor-pointer" data-aos="zoom-in" data-aos-delay="800">
-              <div className="w-24 h-24 sm:w-32 sm:h-32 md:w-56 md:h-56 lg:w-64 lg:h-64 rounded-full bg-black border border-white sm:border-2 border-white flex items-center justify-center relative overflow-hidden">
+            <div className="absolute top-36 sm:top-48 lg:top-1/2 lg:-translate-y-1/2 -left-4 sm:left-0 md:left-4 lg:left-8 z-20 float-animation hover-scale cursor-pointer" data-aos="zoom-in" data-aos-delay="800">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 md:w-56 md:h-56 lg:w-64 lg:h-64 rounded-full bg-black border border-white sm:border-2 border-white flex items-center justify-center relative overflow-hidden">
                 <svg className="absolute inset-0 w-full h-full rotate-circle-1" viewBox="0 0 200 200">
                   <defs>
                     <path id="circle1" d="M 100, 100 m -95, 0 a 95,95 0 1,1 190,0 a 95,95 0 1,1 -190,0" />
@@ -158,7 +158,7 @@ export default function ContactsUs() {
             </div>
 
             {/* Medium Circle 1 - White, Center */}
-            <div className="absolute top-44 sm:top-56 left-1/2 transform -translate-x-1/2 md:translate-x-12 z-10 float-slow hover-scale cursor-pointer" data-aos="zoom-in" data-aos-delay="900">
+            <div className="absolute top-44 sm:top-56 lg:top-1/2 lg:-translate-y-1/2 left-1/2 transform -translate-x-1/2 md:translate-x-12 lg:translate-x-16 z-10 float-slow hover-scale cursor-pointer" data-aos="zoom-in" data-aos-delay="900">
               <div className="w-20 h-20 sm:w-24 sm:h-24 md:w-40 md:h-40 lg:w-48 lg:h-48 rounded-full bg-white border border-black sm:border-2 border-black flex items-center justify-center relative overflow-hidden">
                 <svg className="absolute inset-0 w-full h-full rotate-circle-2" viewBox="0 0 200 200">
                   <defs>
@@ -179,8 +179,8 @@ export default function ContactsUs() {
             </div>
 
             {/* Large Circle 2 - Black, Right */}
-            <div className="absolute top-52 sm:top-64 right-0 sm:right-2 md:right-8 z-20 float-animation hover-scale cursor-pointer" style={{ animationDelay: '1s' }} data-aos="zoom-in" data-aos-delay="1000">
-              <div className="w-24 h-24 sm:w-32 sm:h-32 md:w-56 md:h-56 lg:w-64 lg:h-64 rounded-full bg-black border border-white sm:border-2 border-white flex items-center justify-center relative overflow-hidden">
+            <div className="absolute top-52 sm:top-64 lg:top-1/2 lg:-translate-y-1/2 -right-4 sm:right-0 md:right-4 lg:right-8 z-20 float-animation hover-scale cursor-pointer" style={{ animationDelay: '1s' }} data-aos="zoom-in" data-aos-delay="1000">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 md:w-56 md:h-56 lg:w-64 lg:h-64 rounded-full bg-black border border-white sm:border-2 border-white flex items-center justify-center relative overflow-hidden">
                 <svg className="absolute inset-0 w-full h-full rotate-circle-3" viewBox="0 0 200 200">
                   <defs>
                     <path id="circle3" d="M 100, 100 m -95, 0 a 95,95 0 1,1 190,0 a 95,95 0 1,1 -190,0" />
@@ -200,7 +200,7 @@ export default function ContactsUs() {
             </div>
 
             {/* Small Circle 1 - White, Top Right */}
-            <div className="hidden sm:block absolute top-20 right-1/4 md:right-1/3 z-15 float-animation hover-scale cursor-pointer" style={{ animationDelay: '0.5s' }} data-aos="zoom-in" data-aos-delay="1100">
+            <div className="hidden sm:block absolute top-20 lg:top-16 right-1/4 md:right-1/4 lg:right-1/3 z-15 float-animation hover-scale cursor-pointer" style={{ animationDelay: '0.5s' }} data-aos="zoom-in" data-aos-delay="1100">
               <div className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 lg:w-32 lg:h-32 rounded-full bg-white border border-black sm:border-2 border-black flex items-center justify-center relative overflow-hidden">
                 <svg className="absolute inset-0 w-full h-full rotate-circle-1" viewBox="0 0 200 200">
                   <defs>
@@ -221,7 +221,7 @@ export default function ContactsUs() {
             </div>
 
             {/* Small Circle 2 - Black, Top Left */}
-            <div className="hidden sm:block absolute top-16 left-1/4 md:left-1/3 z-15 float-slow hover-scale cursor-pointer" style={{ animationDelay: '1.5s' }} data-aos="zoom-in" data-aos-delay="1200">
+            <div className="hidden sm:block absolute top-16 lg:top-12 left-1/4 md:left-1/4 lg:left-1/3 z-15 float-slow hover-scale cursor-pointer" style={{ animationDelay: '1.5s' }} data-aos="zoom-in" data-aos-delay="1200">
               <div className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 lg:w-32 lg:h-32 rounded-full bg-black border border-white sm:border-2 border-white flex items-center justify-center relative overflow-hidden">
                 <svg className="absolute inset-0 w-full h-full rotate-circle-2" viewBox="0 0 200 200">
                   <defs>
@@ -242,8 +242,8 @@ export default function ContactsUs() {
             </div>
 
             {/* Medium Circle 2 - Black, Bottom Left */}
-            <div className="absolute bottom-12 sm:bottom-20 left-1/6 sm:left-1/4 md:left-1/3 z-20 float-animation hover-scale cursor-pointer" style={{ animationDelay: '2s' }} data-aos="zoom-in" data-aos-delay="1300">
-              <div className="w-20 h-20 sm:w-28 sm:h-28 md:w-40 md:h-40 lg:w-48 lg:h-48 rounded-full bg-black border border-white sm:border-2 border-white flex items-center justify-center relative overflow-hidden">
+            <div className="absolute bottom-12 sm:bottom-20 lg:bottom-24 left-0 sm:left-1/6 md:left-1/4 lg:left-1/3 z-20 float-animation hover-scale cursor-pointer" style={{ animationDelay: '2s' }} data-aos="zoom-in" data-aos-delay="1300">
+              <div className="w-16 h-16 sm:w-24 sm:h-24 md:w-40 md:h-40 lg:w-48 lg:h-48 rounded-full bg-black border border-white sm:border-2 border-white flex items-center justify-center relative overflow-hidden">
                 <svg className="absolute inset-0 w-full h-full rotate-circle-3" viewBox="0 0 200 200">
                   <defs>
                     <path id="circle6" d="M 100, 100 m -75, 0 a 75,75 0 1,1 150,0 a 75,75 0 1,1 -150,0" />
@@ -263,7 +263,7 @@ export default function ContactsUs() {
             </div>
 
             {/* Small Circle 3 - White, Bottom Right */}
-            <div className="hidden sm:block absolute bottom-16 right-1/4 md:right-1/3 z-15 float-slow hover-scale cursor-pointer" style={{ animationDelay: '2.5s' }} data-aos="zoom-in" data-aos-delay="1400">
+            <div className="hidden sm:block absolute bottom-16 lg:bottom-24 right-1/4 md:right-1/4 lg:right-1/3 z-15 float-slow hover-scale cursor-pointer" style={{ animationDelay: '2.5s' }} data-aos="zoom-in" data-aos-delay="1400">
               <div className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 lg:w-32 lg:h-32 rounded-full bg-white border border-black sm:border-2 border-black flex items-center justify-center relative overflow-hidden">
                 <svg className="absolute inset-0 w-full h-full rotate-circle-1" viewBox="0 0 200 200">
                   <defs>
@@ -284,7 +284,7 @@ export default function ContactsUs() {
             </div>
 
             {/* Small Circle 4 - Black, Middle Left */}
-            <div className="hidden md:block absolute top-1/2 left-1/6 md:left-1/5 transform -translate-y-1/2 z-15 float-animation hover-scale cursor-pointer" style={{ animationDelay: '1s' }} data-aos="zoom-in" data-aos-delay="1500">
+            <div className="hidden md:block absolute top-1/2 left-1/6 md:left-12 lg:left-16 transform -translate-y-1/2 z-15 float-animation hover-scale cursor-pointer" style={{ animationDelay: '1s' }} data-aos="zoom-in" data-aos-delay="1500">
               <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 lg:w-28 lg:h-28 rounded-full bg-black border border-white sm:border-2 border-white flex items-center justify-center relative overflow-hidden">
                 <svg className="absolute inset-0 w-full h-full rotate-circle-2" viewBox="0 0 200 200">
                   <defs>
@@ -305,7 +305,7 @@ export default function ContactsUs() {
             </div>
 
             {/* Small Circle 5 - White, Middle Right */}
-            <div className="hidden md:block absolute top-1/2 right-1/6 md:right-1/5 transform -translate-y-1/2 z-15 float-slow hover-scale cursor-pointer" style={{ animationDelay: '1.5s' }} data-aos="zoom-in" data-aos-delay="1600">
+            <div className="hidden md:block absolute top-1/2 right-1/6 md:right-12 lg:right-16 transform -translate-y-1/2 z-15 float-slow hover-scale cursor-pointer" style={{ animationDelay: '1.5s' }} data-aos="zoom-in" data-aos-delay="1600">
               <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 lg:w-28 lg:h-28 rounded-full bg-white border border-black sm:border-2 border-black flex items-center justify-center relative overflow-hidden">
                 <svg className="absolute inset-0 w-full h-full rotate-circle-3" viewBox="0 0 200 200">
                   <defs>
@@ -328,9 +328,9 @@ export default function ContactsUs() {
         </div>
 
         {/* Bottom Section - Large Black Rectangle */}
-        <div className="bg-black py-4 sm:py-6 md:py-8 lg:py-12 px-4 sm:px-6 md:px-8 lg:px-16 flex-shrink-0 rounded-lg" data-aos="fade-up" data-aos-delay="1700">
-          <div className="text-center">
-            <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-5xl xl:text-6xl 2xl:text-7xl font-black text-white tracking-tighter" data-aos="fade-up" data-aos-delay="1800">
+        <div className="bg-black py-4 sm:py-6 md:py-8 lg:py-12 px-4 sm:px-6 md:px-8 lg:px-16 flex-shrink-0 rounded-lg w-full max-w-full overflow-x-hidden" data-aos="fade-up" data-aos-delay="1700">
+          <div className="text-center w-full max-w-full overflow-x-hidden">
+            <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-5xl xl:text-6xl 2xl:text-7xl font-black text-white tracking-tighter break-words" data-aos="fade-up" data-aos-delay="1800">
               CONTACTS
               <span className="inline-block mx-1 sm:mx-2 md:mx-3 lg:mx-6 relative align-middle" data-aos="zoom-in" data-aos-delay="1900">
                 <span className="relative inline-block">

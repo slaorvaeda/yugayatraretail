@@ -4,10 +4,10 @@ import Image from 'next/image';
 
 export default function EndlessPossibilities() {
   return (
-    <section className="py-24 px-4 md:px-8 lg:px-16" style={{ backgroundColor: '#F8F8F8' }}>
-      <div className="max-w-7xl mx-auto">
+    <section className="py-12 sm:py-16 md:py-20 lg:py-24 px-4 md:px-8 lg:px-16 overflow-x-hidden" style={{ backgroundColor: '#F8F8F8' }}>
+      <div className="max-w-7xl mx-auto w-full">
         {/* Title */}
-        <div className="text-center mb-20" data-aos="fade-up">
+        <div className="text-center mb-12 sm:mb-16 md:mb-20" data-aos="fade-up">
           <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-blue-900 mb-6 md:mb-8 lg:mb-10 px-4" data-aos="fade-up" data-aos-delay="100">
             Endless Possibilities to Share
           </h2>
@@ -22,9 +22,9 @@ export default function EndlessPossibilities() {
         </div>
 
         {/* Image Grid with 108 Graphic */}
-        <div className="relative mt-24" data-aos="fade-up" data-aos-delay="500">
+        <div className="relative mt-12 sm:mt-16 md:mt-20 lg:mt-24" data-aos="fade-up" data-aos-delay="500">
           {/* 2x2 Image Grid */}
-          <div className="grid grid-cols-2 gap-4 sm:gap-6 md:gap-8 max-w-5xl mx-auto">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 md:gap-6 lg:gap-8 max-w-5xl mx-auto px-2 sm:px-0">
             {/* Top Left - Training */}
             <div className="rounded-2xl sm:rounded-3xl md:rounded-[40px] overflow-hidden shadow-xl md:shadow-2xl" data-aos="zoom-in" data-aos-delay="600">
               <div className="relative w-full h-[180px] sm:h-[220px] md:h-[280px] lg:h-[350px] bg-gradient-to-br from-blue-50 to-blue-100">

@@ -4,8 +4,8 @@ import Image from 'next/image';
 
 export default function SharingNewWay() {
   return (
-    <section className="py-24 px-4 md:px-8 lg:px-16" style={{ backgroundColor: '#F8F8F8' }}>
-      <div className="max-w-6xl mx-auto text-center">
+    <section className="py-12 sm:py-16 md:py-20 lg:py-24 px-4 md:px-8 lg:px-16 overflow-x-hidden" style={{ backgroundColor: '#F8F8F8' }}>
+      <div className="max-w-6xl mx-auto w-full text-center">
         <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-blue-900 mb-6 md:mb-8 lg:mb-10 px-4" data-aos="fade-up">
           Sharing is the 21st century&apos;s new way of contribution to the community.
         </h2>

@@ -43,7 +43,7 @@ export default function AboutPage() {
   }
 
   return (
-    <div className="min-h-screen relative" style={{ backgroundColor: '#F8F8F8' }}>
+    <div className="min-h-screen relative pb-8 overflow-x-hidden" style={{ backgroundColor: '#F8F8F8' }}>
       {/* Left Sidebar - Small Navigation */}
       <div className="hidden sm:flex fixed left-4 md:left-6 top-1/2 transform -translate-y-1/2 z-30">
         <div className="flex flex-col items-center gap-4">

@@ -4,15 +4,15 @@ import Image from 'next/image';
 
 export default function AboutHero() {
   return (
-    <section className="min-h-screen bg-gray-50 pt-8 pb-16 px-4 md:px-8 lg:px-16" style={{ backgroundColor: '#F8F8F8' }}>
-      <div className="max-w-7xl mx-auto">
+    <section className="min-h-screen bg-gray-50 pt-20 sm:pt-24 md:pt-8 pb-12 sm:pb-16 px-4 md:px-8 lg:px-16 overflow-x-hidden" style={{ backgroundColor: '#F8F8F8' }}>
+      <div className="max-w-7xl mx-auto w-full">
         
         {/* Mobile Design - Separate Layout */}
         <div className="lg:hidden">
           <div className="flex flex-col items-center text-center py-8">
             {/* Mobile: Logo First */}
-            <div className="mb-8" data-aos="fade-down" data-aos-delay="100">
-              <div className="relative w-48 h-48 rounded-full bg-white shadow-2xl overflow-hidden border-4 border-blue-200 mx-auto">
+            <div className="mb-6 sm:mb-8" data-aos="fade-down" data-aos-delay="100">
+              <div className="relative w-40 h-40 sm:w-48 sm:h-48 rounded-full bg-white shadow-2xl overflow-hidden border-4 border-blue-200 mx-auto">
                 <Image
                   src="/logo.png"
                   alt="Yugayatra Retail Logo"
@@ -24,17 +24,17 @@ export default function AboutHero() {
             </div>
 
             {/* Mobile: Title */}
-            <h1 className="text-5xl font-bold text-blue-900 mb-4 leading-tight" data-aos="fade-up" data-aos-delay="200">
+            <h1 className="text-4xl sm:text-5xl font-bold text-blue-900 mb-3 sm:mb-4 leading-tight" data-aos="fade-up" data-aos-delay="200">
               About
             </h1>
 
             {/* Mobile: Company Name */}
-            <h2 className="text-2xl font-bold text-blue-900 mb-6" data-aos="fade-up" data-aos-delay="300">
+            <h2 className="text-xl sm:text-2xl font-bold text-blue-900 mb-4 sm:mb-6" data-aos="fade-up" data-aos-delay="300">
               yugayatraretail
             </h2>
 
             {/* Mobile: Description */}
-            <p className="text-base text-blue-700 mb-8 px-4 leading-relaxed max-w-md mx-auto" data-aos="fade-up" data-aos-delay="400">
+            <p className="text-sm sm:text-base text-blue-700 mb-8 px-4 leading-relaxed max-w-md mx-auto" data-aos="fade-up" data-aos-delay="400">
               Empowering careers through innovative workforce development and industry-aligned training programs.
             </p>
 

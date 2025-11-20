@@ -43,23 +43,23 @@ export default function FourDSharing() {
   ];
 
   return (
-    <section className="py-24 px-4 md:px-8 lg:px-16" style={{ backgroundColor: '#F8F8F8' }}>
-      <div className="max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+    <section className="py-12 sm:py-16 md:py-20 lg:py-24 px-4 md:px-8 lg:px-16 overflow-x-hidden" style={{ backgroundColor: '#F8F8F8' }}>
+      <div className="max-w-7xl mx-auto w-full">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 sm:gap-16 md:gap-20 items-center">
           {/* Left: Title and Image */}
           <div className="relative" data-aos="fade-right">
-            <div className="mb-10" data-aos="fade-up" data-aos-delay="100">
-              <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-blue-900 mb-2 md:mb-3 text-center lg:text-left" data-aos="fade-up" data-aos-delay="200">
+            <div className="mb-6 sm:mb-8 md:mb-10" data-aos="fade-up" data-aos-delay="100">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-blue-900 mb-2 md:mb-3 text-center lg:text-left" data-aos="fade-up" data-aos-delay="200">
                 4D Sharing
               </h2>
-              <p className="text-base sm:text-lg text-blue-700 text-center lg:text-left" data-aos="fade-up" data-aos-delay="300">
+              <p className="text-sm sm:text-base md:text-lg text-blue-700 text-center lg:text-left" data-aos="fade-up" data-aos-delay="300">
                 Our Core Services
               </p>
             </div>
             
             {/* Main Image */}
-            <div className="rounded-3xl md:rounded-[40px] overflow-hidden shadow-2xl mb-8 lg:mb-0" data-aos="zoom-in" data-aos-delay="400">
-              <div className="relative w-full h-[300px] sm:h-[350px] md:h-[400px] lg:h-[450px] bg-gradient-to-br from-blue-100 via-blue-200 to-blue-300">
+            <div className="rounded-2xl sm:rounded-3xl md:rounded-[40px] overflow-hidden shadow-xl md:shadow-2xl mb-6 sm:mb-8 lg:mb-0" data-aos="zoom-in" data-aos-delay="400">
+              <div className="relative w-full h-[280px] sm:h-[320px] md:h-[380px] lg:h-[450px] bg-gradient-to-br from-blue-100 via-blue-200 to-blue-300">
                 <Image
                   src="https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=800&q=80"
                   alt="Professional Training Programs"
