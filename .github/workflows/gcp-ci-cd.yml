@@ -1,0 +1,215 @@
+name: GCP CI/CD
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: 20
+  PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+  REGION: ${{ vars.GCP_REGION }}
+  ARTIFACT_REPOSITORY: ${{ vars.GCP_ARTIFACT_REPOSITORY }}
+  BACKEND_SERVICE: ${{ vars.CLOUD_RUN_BACKEND_SERVICE }}
+  FRONTEND_SERVICE: ${{ vars.CLOUD_RUN_FRONTEND_SERVICE }}
+  CLIENT_URLS: ${{ vars.CLIENT_URLS }}
+  NEXT_PUBLIC_API_BASE_URL: ${{ vars.NEXT_PUBLIC_API_BASE_URL }}
+
+jobs:
+  backend-tests:
+    name: Backend tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm run test -- --runInBand
+
+  frontend-tests:
+    name: Frontend tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Run tests
+        run: npm run test -- --runInBand
+
+  deploy:
+    name: Build & deploy
+    runs-on: ubuntu-latest
+    needs:
+      - backend-tests
+      - frontend-tests
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      IMAGE_TAG: ${{ github.sha }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify GCP service account key
+        run: |
+          if [ -z "${{ secrets.GCP_SA_KEY }}" ]; then
+            echo "❌ GCP_SA_KEY secret is NOT configured. Aborting."
+            exit 1
+          fi
+          echo "✅ GCP_SA_KEY secret detected."
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Setup gcloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Enable required APIs
+        run: |
+          gcloud services enable run.googleapis.com artifactregistry.googleapis.com cloudbuild.googleapis.com
+
+      - name: Configure Artifact Registry auth
+        run: |
+          gcloud auth configure-docker "${{ env.REGION }}-docker.pkg.dev" --quiet
+
+      - name: Ensure Artifact Registry repository
+        run: |
+          if ! gcloud artifacts repositories describe "${{ env.ARTIFACT_REPOSITORY }}" --location "${{ env.REGION }}" > /dev/null 2>&1; then
+            gcloud artifacts repositories create "${{ env.ARTIFACT_REPOSITORY }}" \
+              --repository-format=DOCKER \
+              --location="${{ env.REGION }}" \
+              --description="Container images for yugayatraretail"
+          fi
+
+      - name: Export image names
+        run: |
+          host="${{ env.REGION }}-docker.pkg.dev"
+          echo "REGISTRY_HOST=$host" >> "$GITHUB_ENV"
+          echo "BACKEND_IMAGE=$host/${{ env.PROJECT_ID }}/${{ env.ARTIFACT_REPOSITORY }}/backend:${{ env.IMAGE_TAG }}" >> "$GITHUB_ENV"
+          echo "FRONTEND_IMAGE=$host/${{ env.PROJECT_ID }}/${{ env.ARTIFACT_REPOSITORY }}/frontend:${{ env.IMAGE_TAG }}" >> "$GITHUB_ENV"
+
+      - name: Build & push backend image
+        run: |
+          docker build -t "$BACKEND_IMAGE" backend
+          docker push "$BACKEND_IMAGE"
+
+      - name: Build & push frontend image
+        env:
+          NEXT_PUBLIC_API_BASE_URL: ${{ env.NEXT_PUBLIC_API_BASE_URL }}
+        run: |
+          docker build \
+            --build-arg NEXT_PUBLIC_API_BASE_URL="$NEXT_PUBLIC_API_BASE_URL" \
+            -t "$FRONTEND_IMAGE" frontend
+          docker push "$FRONTEND_IMAGE"
+
+      - name: Create backend env file
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME }}
+          CLOUDINARY_API_KEY: ${{ secrets.CLOUDINARY_API_KEY }}
+          CLOUDINARY_API_SECRET: ${{ secrets.CLOUDINARY_API_SECRET }}
+          CLIENT_URLS: ${{ env.CLIENT_URLS }}
+        run: |
+          python - <<'PY'
+          import os
+          from pathlib import Path
+
+          required = {
+              "PORT": "5001",
+              "NODE_ENV": "production",
+              "CLIENT_URL": os.environ.get("CLIENT_URLS"),
+              "SUPABASE_URL": os.environ.get("SUPABASE_URL"),
+              "SUPABASE_SERVICE_ROLE_KEY": os.environ.get("SUPABASE_SERVICE_ROLE_KEY"),
+              "JWT_SECRET": os.environ.get("JWT_SECRET"),
+              "CLOUDINARY_CLOUD_NAME": os.environ.get("CLOUDINARY_CLOUD_NAME"),
+              "CLOUDINARY_API_KEY": os.environ.get("CLOUDINARY_API_KEY"),
+              "CLOUDINARY_API_SECRET": os.environ.get("CLOUDINARY_API_SECRET"),
+          }
+
+          missing = [key for key, value in required.items() if not value]
+          if missing:
+              raise SystemExit(f"Missing backend environment values: {', '.join(missing)}")
+
+          lines = [f"{key}={value}" for key, value in required.items()]
+
+          Path("backend.env").write_text("\n".join(lines))
+          PY
+
+      - name: Deploy backend to Cloud Run
+        run: |
+          gcloud run deploy "${{ env.BACKEND_SERVICE }}" \
+            --image "$BACKEND_IMAGE" \
+            --region "${{ env.REGION }}" \
+            --platform managed \
+            --port 5001 \
+            --allow-unauthenticated \
+            --env-vars-file backend.env
+
+      - name: Create frontend env file
+        env:
+          NEXT_PUBLIC_API_BASE_URL: ${{ env.NEXT_PUBLIC_API_BASE_URL }}
+        run: |
+          python - <<'PY'
+          import os
+          from pathlib import Path
+
+          required = {
+              "PORT": "3000",
+              "NODE_ENV": "production",
+              "NEXT_PUBLIC_API_BASE_URL": os.environ.get("NEXT_PUBLIC_API_BASE_URL"),
+          }
+
+          missing = [key for key, value in required.items() if not value]
+          if missing:
+              raise SystemExit(f"Missing frontend environment values: {', '.join(missing)}")
+
+          Path("frontend.env").write_text("\n".join(f"{key}={value}" for key, value in required.items()))
+          PY
+
+      - name: Deploy frontend to Cloud Run
+        run: |
+          gcloud run deploy "${{ env.FRONTEND_SERVICE }}" \
+            --image "$FRONTEND_IMAGE" \
+            --region "${{ env.REGION }}" \
+            --platform managed \
+            --port 3000 \
+            --allow-unauthenticated \
+            --env-vars-file frontend.env
+
