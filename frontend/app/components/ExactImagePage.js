@@ -140,14 +140,14 @@ export default function ExactImagePage() {
   return (
     <div 
       ref={pageRef}
-      className="min-h-screen relative overflow-y-auto"
+      className="min-h-screen relative"
       data-aos="fade-up"
     >
       {/* Exact Network Graphic from Image */}
       <ExactImageMatch />
       
       {/* Mobile Design - Single Column Layout */}
-      <div className="lg:hidden relative top-16 left-0 right-0 z-10 px-4 py-8 pb-16" data-aos="fade-up" data-aos-delay="100">
+      <div className="lg:hidden relative z-10 px-4 py-8 pb-16 pt-24" data-aos="fade-up" data-aos-delay="100">
         <div className="max-w-7xl mx-auto space-y-4">
           {contentBoxes.map((box, index) => (
             <div
@@ -197,7 +197,7 @@ export default function ExactImagePage() {
       </div>
 
       {/* Desktop Design - Multi-Row Grid Layout */}
-      <div className="hidden lg:block relative top-12 left-0 right-0 z-10 px-8 py-12 pb-20" data-aos="fade-up" data-aos-delay="100">
+      <div className="hidden lg:block relative z-10 px-8 py-12 pb-20 pt-20" data-aos="fade-up" data-aos-delay="100">
         <div className="max-w-7xl mx-auto">
           {/* Multi-Row Grid - 3 Columns */}
           <div className="grid grid-cols-3 gap-6 items-stretch">

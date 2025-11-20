@@ -100,7 +100,7 @@ export default function Home() {
           </div>
           
           {/* Content layers */}
-          <div className="relative z-10">
+          <div className="relative z-10 md:scale-90 ">
             {/* Hero Section */}
             <Hero />
           </div>

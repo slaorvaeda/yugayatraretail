@@ -64,6 +64,8 @@ const artCards = [
 
 const ArtGalleryHero = () => {
   const [isMounted, setIsMounted] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const sectionRef = useRef(null);
   const cardsContainerRef = useRef(null);
   const cardsRef = useRef([]);
 
@@ -75,8 +77,36 @@ const ArtGalleryHero = () => {
     return () => cancelAnimationFrame(frame);
   }, []);
 
+  // Intersection Observer to detect when section is visible
   useEffect(() => {
-    if (!isMounted) return;
+    if (!sectionRef.current) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && !isVisible) {
+            setIsVisible(true);
+          }
+        });
+      },
+      {
+        threshold: 0.2, // Trigger when 20% of section is visible
+        rootMargin: '0px'
+      }
+    );
+
+    observer.observe(sectionRef.current);
+
+    return () => {
+      if (sectionRef.current) {
+        observer.unobserve(sectionRef.current);
+      }
+    };
+  }, [isVisible]);
+
+  // Animate cards only when section is visible
+  useEffect(() => {
+    if (!isMounted || !isVisible) return;
 
     // Set initial state for all cards - they start as one set below the viewport
     gsap.set(cardsRef.current, {
@@ -87,7 +117,7 @@ const ArtGalleryHero = () => {
     });
 
     // Create timeline for the animation
-    const tl = gsap.timeline({ delay: 1 });
+    const tl = gsap.timeline({ delay: 0.3 });
 
     // First, bring all cards up as one set
     tl.to(cardsRef.current, {
@@ -109,10 +139,10 @@ const ArtGalleryHero = () => {
       stagger: 0.15
     }, "-=0.5");
 
-  }, [isMounted]);
+  }, [isMounted, isVisible]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white flex flex-col items-center justify-center px-4 py-12 lg:py-20" data-aos="fade-up">
+    <div ref={sectionRef} className="min-h-screen bg-gradient-to-b from-gray-50 to-white flex flex-col items-center justify-center px-4 py-12 lg:py-20">
       {/* Mobile Design - Different Layout */}
       <div className="lg:hidden w-full">
         <div className="text-center mb-8" data-aos="fade-up" data-aos-delay="100">
@@ -193,7 +223,7 @@ const ArtGalleryHero = () => {
         </motion.div>
 
         {/* Art Cards Container */}
-        <div className="relative mb-16 w-full max-w-6xl" data-aos="zoom-in" data-aos-delay="400">
+        <div className="relative mb-16 w-full max-w-6xl">
         {/* Speech Bubbles */}
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
@@ -222,7 +252,7 @@ const ArtGalleryHero = () => {
         </motion.div>
 
         {/* Art Cards */}
-        <div ref={cardsContainerRef} className="flex justify-center items-center relative h-80" data-aos="fade-up" data-aos-delay="700">
+        <div ref={cardsContainerRef} className="flex justify-center items-center relative h-80">
           {artCards.map((card, index) => (
             <div
               key={card.id}
@@ -230,13 +260,11 @@ const ArtGalleryHero = () => {
               className="absolute w-48 h-64 rounded-3xl shadow-2xl cursor-pointer flex flex-col items-center justify-center transform transition-all duration-150 hover:shadow-3xl overflow-hidden"
               style={{
                 left: `${20 + (index * 8)}%`,
-                top: isMounted ? `${Math.sin(index * 0.5) * 20}px` : '0px',
+                top: '0px',
                 zIndex: card.zIndex
               }}
-              data-aos="zoom-in"
-              data-aos-delay={`${800 + (index * 50)}`}
               onMouseEnter={() => {
-                if (!isMounted) return;
+                if (!isMounted || !isVisible) return;
                 const currentY = gsap.getProperty(cardsRef.current[index], "y") || 0;
                 gsap.to(cardsRef.current[index], {
                   scale: 1.05,
@@ -249,7 +277,7 @@ const ArtGalleryHero = () => {
                 });
               }}
               onMouseLeave={() => {
-                if (!isMounted) return;
+                if (!isMounted || !isVisible) return;
                 const baseY = Math.sin(index * 0.5) * 20;
                 gsap.to(cardsRef.current[index], {
                   scale: 1,
