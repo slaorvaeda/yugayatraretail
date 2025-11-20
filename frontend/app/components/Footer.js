@@ -200,6 +200,11 @@ export default function Footer() {
                 © {currentYear} Yugayatra Retail All rights reserved · Made with Yugayatra Retail
               </p>
               
+              {/* Center - Built by Credit */}
+              <p className="text-xs text-gray-500" data-aos="fade-up" data-aos-delay="750">
+                Built by <span className="font-medium text-gray-700">Durgamadhab Nayak</span>
+              </p>
+              
               {/* Right Side - Built in + Icons */}
               <div className="flex items-center gap-3" data-aos="fade-up" data-aos-delay="800">
                 <span className="text-xs text-gray-500">Built in</span>

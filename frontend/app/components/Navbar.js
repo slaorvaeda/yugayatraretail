@@ -204,11 +204,11 @@ export default function Navbar() {
 
   return (
     <>
-      <nav ref={navbarRef} className="fixed top-0 left-0 right-0 z-50 flex justify-between items-center py-4" style={{ scrollBehavior: 'smooth' }}>
+      <nav ref={navbarRef} className="fixed top-0 left-0 right-0 z-50 flex justify-between items-center py-2 md:py-2 bg-gray-100/45 backdrop-blur-lg md:backdrop-blur-none border-b border-white/20 shadow-lg md:bg-transparent md:border-b-0 md:shadow-none rounded-3xl m-2 md:mx-2 "  style={{ scrollBehavior: 'smooth' }}>
         {/* Logo on the left */}
-        <div className="mx-4 md:mx-10">
-          <Link href="/" className="hover:scale-110 transition-transform duration-300">
-            <Image src="/logo.png" alt="Logo" width={200} height={70} className="w-32 md:w-[200px] h-auto" style={{ width: "auto", height: "auto" }} />
+        <div className="mx-4 md:mx-10 md:backdrop-blur-lg md:rounded-3xl">
+          <Link href="/" className="hover:scale-100 transition-transform duration-300">
+            <Image src="/logo.png" alt="Logo" width={150} height={53} className="w-24 md:w-[150px] h-auto" style={{ width: "auto", height: "auto" }} />
           </Link>
         </div>
 
