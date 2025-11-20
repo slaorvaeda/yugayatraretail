@@ -46,12 +46,13 @@ jobs:
           WARNINGS=0
           
           # Check GCP_SA_KEY (Required) - Write to temp file to avoid shell interpretation
-          if [ -z "${{ secrets.GCP_SA_KEY }}" ]; then
+          # Write secret to temp file first, then check if file exists and has content
+          echo "${{ secrets.GCP_SA_KEY }}" > /tmp/gcp_sa_key.json 2>/dev/null || true
+          
+          if [ ! -s /tmp/gcp_sa_key.json ]; then
             echo "❌ GCP_SA_KEY: NOT SET (REQUIRED)"
             ERRORS=$((ERRORS + 1))
           else
-            # Write secret to temp file - GitHub Actions will handle the secret substitution
-            echo "${{ secrets.GCP_SA_KEY }}" > /tmp/gcp_sa_key.json
             LENGTH=$(wc -c < /tmp/gcp_sa_key.json | tr -d ' ')
             echo "✅ GCP_SA_KEY: SET (length: $LENGTH chars)"
             
@@ -85,64 +86,70 @@ jobs:
           fi
           
           # Check SUPABASE_URL (Required)
-          SUPABASE_URL_VALUE="${{ secrets.SUPABASE_URL }}"
-          if [ -z "$SUPABASE_URL_VALUE" ]; then
+          echo "${{ secrets.SUPABASE_URL }}" > /tmp/supabase_url.txt 2>/dev/null || true
+          if [ ! -s /tmp/supabase_url.txt ]; then
             echo "❌ SUPABASE_URL: NOT SET (REQUIRED)"
             ERRORS=$((ERRORS + 1))
           else
             echo "✅ SUPABASE_URL: SET"
             # Only show first 50 chars for security
-            URL_PREVIEW=$(echo "$SUPABASE_URL_VALUE" | cut -c1-50)
+            URL_PREVIEW=$(head -c 50 /tmp/supabase_url.txt)
             echo "   📋 Value: ${URL_PREVIEW}..."
+            rm -f /tmp/supabase_url.txt
           fi
           
           # Check SUPABASE_SERVICE_ROLE_KEY (Required)
-          SUPABASE_KEY_VALUE="${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}"
-          if [ -z "$SUPABASE_KEY_VALUE" ]; then
+          echo -n "${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" > /tmp/supabase_key.txt 2>/dev/null || true
+          if [ ! -s /tmp/supabase_key.txt ]; then
             echo "❌ SUPABASE_SERVICE_ROLE_KEY: NOT SET (REQUIRED)"
             ERRORS=$((ERRORS + 1))
           else
-            LENGTH=$(echo -n "$SUPABASE_KEY_VALUE" | wc -c | tr -d ' ')
+            LENGTH=$(wc -c < /tmp/supabase_key.txt | tr -d ' ')
             echo "✅ SUPABASE_SERVICE_ROLE_KEY: SET (length: $LENGTH chars)"
+            rm -f /tmp/supabase_key.txt
           fi
           
           # Check JWT_SECRET (Required)
-          JWT_SECRET_VALUE="${{ secrets.JWT_SECRET }}"
-          if [ -z "$JWT_SECRET_VALUE" ]; then
+          echo -n "${{ secrets.JWT_SECRET }}" > /tmp/jwt_secret.txt 2>/dev/null || true
+          if [ ! -s /tmp/jwt_secret.txt ]; then
             echo "❌ JWT_SECRET: NOT SET (REQUIRED)"
             ERRORS=$((ERRORS + 1))
           else
-            LENGTH=$(echo -n "$JWT_SECRET_VALUE" | wc -c | tr -d ' ')
+            LENGTH=$(wc -c < /tmp/jwt_secret.txt | tr -d ' ')
             echo "✅ JWT_SECRET: SET (length: $LENGTH chars)"
             if [ "$LENGTH" -lt 32 ]; then
               echo "   ⚠️  WARNING: JWT_SECRET should be at least 32 characters"
               WARNINGS=$((WARNINGS + 1))
             fi
+            rm -f /tmp/jwt_secret.txt
           fi
           
           # Check CLOUDINARY secrets (Required)
-          CLOUDINARY_NAME_VALUE="${{ secrets.CLOUDINARY_CLOUD_NAME }}"
-          if [ -z "$CLOUDINARY_NAME_VALUE" ]; then
+          echo -n "${{ secrets.CLOUDINARY_CLOUD_NAME }}" > /tmp/cloudinary_name.txt 2>/dev/null || true
+          if [ ! -s /tmp/cloudinary_name.txt ]; then
             echo "❌ CLOUDINARY_CLOUD_NAME: NOT SET (REQUIRED)"
             ERRORS=$((ERRORS + 1))
           else
             echo "✅ CLOUDINARY_CLOUD_NAME: SET"
+            rm -f /tmp/cloudinary_name.txt
           fi
           
-          CLOUDINARY_KEY_VALUE="${{ secrets.CLOUDINARY_API_KEY }}"
-          if [ -z "$CLOUDINARY_KEY_VALUE" ]; then
+          echo -n "${{ secrets.CLOUDINARY_API_KEY }}" > /tmp/cloudinary_key.txt 2>/dev/null || true
+          if [ ! -s /tmp/cloudinary_key.txt ]; then
             echo "❌ CLOUDINARY_API_KEY: NOT SET (REQUIRED)"
             ERRORS=$((ERRORS + 1))
           else
             echo "✅ CLOUDINARY_API_KEY: SET"
+            rm -f /tmp/cloudinary_key.txt
           fi
           
-          CLOUDINARY_SECRET_VALUE="${{ secrets.CLOUDINARY_API_SECRET }}"
-          if [ -z "$CLOUDINARY_SECRET_VALUE" ]; then
+          echo -n "${{ secrets.CLOUDINARY_API_SECRET }}" > /tmp/cloudinary_secret.txt 2>/dev/null || true
+          if [ ! -s /tmp/cloudinary_secret.txt ]; then
             echo "❌ CLOUDINARY_API_SECRET: NOT SET (REQUIRED)"
             ERRORS=$((ERRORS + 1))
           else
             echo "✅ CLOUDINARY_API_SECRET: SET"
+            rm -f /tmp/cloudinary_secret.txt
           fi
           
           echo ""
