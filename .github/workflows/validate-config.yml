@@ -46,20 +46,21 @@ jobs:
           WARNINGS=0
           
           # Check GCP_SA_KEY (Required)
-          GCP_SA_KEY="${{ secrets.GCP_SA_KEY }}"
+          # Use printf to safely handle multi-line secrets
+          GCP_SA_KEY=$(printf '%s' "${{ secrets.GCP_SA_KEY }}")
           if [ -z "${GCP_SA_KEY}" ]; then
             echo "❌ GCP_SA_KEY: NOT SET (REQUIRED)"
             ERRORS=$((ERRORS + 1))
           else
-            LENGTH=$(echo -n "${GCP_SA_KEY}" | wc -c)
+            LENGTH=$(printf '%s' "${GCP_SA_KEY}" | wc -c)
             echo "✅ GCP_SA_KEY: SET (length: $LENGTH chars)"
             
             # Validate JSON format
-            echo "${GCP_SA_KEY}" | jq -e . > /dev/null 2>&1
+            printf '%s' "${GCP_SA_KEY}" | jq -e . > /dev/null 2>&1
             if [ $? -eq 0 ]; then
               echo "   ✅ Valid JSON format"
-              PROJECT_ID=$(echo "${GCP_SA_KEY}" | jq -r '.project_id // empty')
-              CLIENT_EMAIL=$(echo "${GCP_SA_KEY}" | jq -r '.client_email // empty')
+              PROJECT_ID=$(printf '%s' "${GCP_SA_KEY}" | jq -r '.project_id // empty')
+              CLIENT_EMAIL=$(printf '%s' "${GCP_SA_KEY}" | jq -r '.client_email // empty')
               echo "   📋 Project ID: $PROJECT_ID"
               echo "   📋 Client Email: $CLIENT_EMAIL"
             else
@@ -69,7 +70,7 @@ jobs:
           fi
           
           # Check SUPABASE_URL (Required)
-          SUPABASE_URL="${{ secrets.SUPABASE_URL }}"
+          SUPABASE_URL=$(printf '%s' "${{ secrets.SUPABASE_URL }}")
           if [ -z "${SUPABASE_URL}" ]; then
             echo "❌ SUPABASE_URL: NOT SET (REQUIRED)"
             ERRORS=$((ERRORS + 1))
@@ -79,22 +80,22 @@ jobs:
           fi
           
           # Check SUPABASE_SERVICE_ROLE_KEY (Required)
-          SUPABASE_KEY="${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}"
+          SUPABASE_KEY=$(printf '%s' "${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}")
           if [ -z "${SUPABASE_KEY}" ]; then
             echo "❌ SUPABASE_SERVICE_ROLE_KEY: NOT SET (REQUIRED)"
             ERRORS=$((ERRORS + 1))
           else
-            LENGTH=$(echo -n "${SUPABASE_KEY}" | wc -c)
+            LENGTH=$(printf '%s' "${SUPABASE_KEY}" | wc -c)
             echo "✅ SUPABASE_SERVICE_ROLE_KEY: SET (length: $LENGTH chars)"
           fi
           
           # Check JWT_SECRET (Required)
-          JWT_SECRET="${{ secrets.JWT_SECRET }}"
+          JWT_SECRET=$(printf '%s' "${{ secrets.JWT_SECRET }}")
           if [ -z "${JWT_SECRET}" ]; then
             echo "❌ JWT_SECRET: NOT SET (REQUIRED)"
             ERRORS=$((ERRORS + 1))
           else
-            LENGTH=$(echo -n "${JWT_SECRET}" | wc -c)
+            LENGTH=$(printf '%s' "${JWT_SECRET}" | wc -c)
             echo "✅ JWT_SECRET: SET (length: $LENGTH chars)"
             if [ $LENGTH -lt 32 ]; then
               echo "   ⚠️  WARNING: JWT_SECRET should be at least 32 characters"
@@ -103,7 +104,7 @@ jobs:
           fi
           
           # Check CLOUDINARY secrets (Required)
-          CLOUDINARY_NAME="${{ secrets.CLOUDINARY_CLOUD_NAME }}"
+          CLOUDINARY_NAME=$(printf '%s' "${{ secrets.CLOUDINARY_CLOUD_NAME }}")
           if [ -z "${CLOUDINARY_NAME}" ]; then
             echo "❌ CLOUDINARY_CLOUD_NAME: NOT SET (REQUIRED)"
             ERRORS=$((ERRORS + 1))
@@ -111,7 +112,7 @@ jobs:
             echo "✅ CLOUDINARY_CLOUD_NAME: SET"
           fi
           
-          CLOUDINARY_KEY="${{ secrets.CLOUDINARY_API_KEY }}"
+          CLOUDINARY_KEY=$(printf '%s' "${{ secrets.CLOUDINARY_API_KEY }}")
           if [ -z "${CLOUDINARY_KEY}" ]; then
             echo "❌ CLOUDINARY_API_KEY: NOT SET (REQUIRED)"
             ERRORS=$((ERRORS + 1))
@@ -119,7 +120,7 @@ jobs:
             echo "✅ CLOUDINARY_API_KEY: SET"
           fi
           
-          CLOUDINARY_SECRET="${{ secrets.CLOUDINARY_API_SECRET }}"
+          CLOUDINARY_SECRET=$(printf '%s' "${{ secrets.CLOUDINARY_API_SECRET }}")
           if [ -z "${CLOUDINARY_SECRET}" ]; then
             echo "❌ CLOUDINARY_API_SECRET: NOT SET (REQUIRED)"
             ERRORS=$((ERRORS + 1))
@@ -175,7 +176,7 @@ jobs:
           fi
           
           # Check CLIENT_URL
-          CLIENT_URL="${{ secrets.CLIENT_URL }}"
+          CLIENT_URL=$(printf '%s' "${{ secrets.CLIENT_URL }}")
           if [ -z "${CLIENT_URL}" ]; then
             echo "⚠️  CLIENT_URL: Not set (will be set automatically after frontend deployment)"
           else
@@ -183,7 +184,7 @@ jobs:
           fi
           
           # Check NEXT_PUBLIC_API_BASE_URL
-          NEXT_PUBLIC_API_BASE_URL="${{ secrets.NEXT_PUBLIC_API_BASE_URL }}"
+          NEXT_PUBLIC_API_BASE_URL=$(printf '%s' "${{ secrets.NEXT_PUBLIC_API_BASE_URL }}")
           if [ -z "${NEXT_PUBLIC_API_BASE_URL}" ]; then
             echo "⚠️  NEXT_PUBLIC_API_BASE_URL: Not set (will use backend URL after deployment)"
           else
