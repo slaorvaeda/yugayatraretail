@@ -52,7 +52,7 @@ jobs:
 
           # Safely write the multi-line secret to a file without interpreting characters.
           cat <<'EOF' > "$TMP_GCP_KEY"
-${{ secrets.GCP_SA_KEY }}
+          ${{ secrets.GCP_SA_KEY }}
 EOF
 
           if grep -q '[^[:space:]]' "$TMP_GCP_KEY"; then
